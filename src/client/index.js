@@ -11,4 +11,8 @@ app.get('/', (req, res) => {
     res.render('home');
 });
 
-app.listen(3000);
+const port = process.argv[2] || 3000;
+
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
