@@ -1,0 +1,9 @@
+{
+    "name": "shopping-list",
+    "private": true,
+    "workspaces": [
+      "client",
+      "server",
+      "proxy"
+    ]
+}

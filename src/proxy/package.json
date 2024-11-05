@@ -1,7 +1,7 @@
 {
-  "name": "client",
+  "name": "proxy",
   "version": "1.0.0",
-  "description": "Client side of the shopping list app",
+  "description": "Server side of the shopping list app",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -13,7 +13,6 @@
   "dependencies": {
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
-    "express-handlebars": "^8.0.1",
     "nodemon": "^3.1.7"
   }
 }
