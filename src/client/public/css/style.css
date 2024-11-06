@@ -1,0 +1,61 @@
+@font-face {
+    font-family: Shopify;
+    src: url('/fonts/Shopify.ttf');
+  }
+  
+
+:root {
+    --dark-green: #304700;
+    --light-green: #F1F5E6;
+    --orange: #f59a23;
+    --white: #ffffff;
+  }
+
+a {
+    text-decoration: none;
+}
+  
+body {
+    background-color: var(--light-green);
+}
+
+header a i{
+    color: var(--orange);
+    margin: .5em;
+    font-size: 2em;
+}
+
+main h1{
+    font-family: Shopify;
+    font-size: 10em;
+    color: var(--dark-green);
+    text-align: center;
+}
+
+
+/* Home Buttons */
+#home-btns {
+    display: flex;
+    justify-content: center;
+    gap: 2em;
+}
+
+#home-btns a {
+    padding: 1em 2em;
+    border-radius: 5px;
+}
+
+#home-btns #login-btn {
+    background-color: var(--dark-green);
+    color: var(--white);
+}
+
+#home-btns #register-btn {
+    background-color: var(--white);
+    color: var(--dark);
+}
+
+#home-btns #login-btn:hover, #home-btns #register-btn:hover {
+    background-color: var(--orange);
+    color: var(--white);
+}
