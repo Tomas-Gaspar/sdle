@@ -7,8 +7,19 @@ app.engine('handlebars', engine());
 app.set('view engine', 'handlebars');
 app.set('views', './views');
 
+app.use(express.static('public'));
+
+// Routes
 app.get('/', (req, res) => {
     res.render('home');
+});
+
+app.get('/login', (req, res) => {
+    res.render('login', { img: 'img/woman.png' });
+  });
+
+app.get('/register', (req, res) => {
+    res.render('register', { img: 'img/woman.png' });
 });
 
 const port = process.argv[2] || 3000;
