@@ -1,12 +1,17 @@
+/* GENERAL */
+
 @font-face {
     font-family: Shopify;
     src: url('/fonts/Shopify.ttf');
   }
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;400;500;600;700;800&display=swap');
   
 
 :root {
     --dark-green: #304700;
     --light-green: #F1F5E6;
+    --light-grey: #C2C2C2;
     --orange: #f59a23;
     --white: #ffffff;
   }
@@ -14,15 +19,52 @@
 a {
     text-decoration: none;
 }
+
+form label > input::placeholder {
+    font-size: .8rem;
+}
+
+button {
+    font-weight: 400;
+    color: white;
+    font-size: .8rem;
+    background-color: var(--dark-green);
+    border: 1px solid var(--dark-green);
+    height: 2.9em;
+    border-radius: .5em;
+    transition: .3s;
+}
+
+button:hover{
+    color: var(--dark-green);
+    text-decoration: none;
+    cursor: pointer;
+    background-color: var(--white);
+    border: 1px solid var(--dark-green);
+}
+  
+
+a {
+    transition: .3s;
+}
+  
+
+/* HOME */
   
 body {
     background-color: var(--light-green);
+    font-family: "Poppins", sans-serif;
 }
 
 header a i{
     color: var(--orange);
     margin: .5em;
     font-size: 2em;
+    transition: .3s;
+}
+
+header a i:hover{
+    color: var(--dark-green);
 }
 
 main h1{

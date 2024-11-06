@@ -15,11 +15,11 @@ app.get('/', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    res.render('login');
+    res.render('login', { img: 'img/woman.png' });
   });
 
 app.get('/register', (req, res) => {
-res.render('register');
+    res.render('register', { img: 'img/woman.png' });
 });
 
 const port = process.argv[2] || 3000;
