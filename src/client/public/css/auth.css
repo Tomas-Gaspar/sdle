@@ -92,7 +92,7 @@
     grid-area: 3/1;
 }
 
-#auth > form div.line_on_text {
+#auth > form div.line-on-text {
     grid-area: 4/1;
 }
 
@@ -102,14 +102,14 @@
 
 /* LINES */
 
-div.line_on_text {
+div.line-on-text {
     overflow: hidden;
     text-align: center;
     color: var(--light-grey);
     font-size: .8em;
   }
   
-div.line_on_text:before, div.line_on_text:after {
+div.line-on-text:before, div.line-on-text:after {
     background-color: var(--light-grey);
     content: "";
     display: inline-block;
@@ -119,12 +119,12 @@ div.line_on_text:before, div.line_on_text:after {
     width: 50%;
 }
 
-div.line_on_text:before {
+div.line-on-text:before {
     right: 0.4em;
     margin-left: -50%;
 }
 
-div.line_on_text:after {
+div.line-on-text:after {
     left: 0.4em;
     margin-right: -50%;
 }

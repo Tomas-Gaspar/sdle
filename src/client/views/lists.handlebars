@@ -1,0 +1,25 @@
+<h2>My Lists</h2>
+
+<section id="lists">
+    <ul>
+        {{#if lists}}
+            {{#each lists}}
+                <li class="list-item">
+                    <p>{{this.name}}</p>
+                    <div class="action-btns">
+                        <button class="icon view-btn" title="View list"><i class="fa-solid fa-eye"></i></button>
+                        <button class="icon edit-btn" title="Edit list"><i class="fa-solid fa-pen"></i></button>
+                        <button class="icon del-btn" title="Delete list"><i class="fa-solid fa-trash fa-lg"></i></button>
+                    </div>
+                </li>
+            {{/each}}
+        {{/if}}
+                <li id="add-list" class="list-item">
+                    <form action="">
+                        <input type="text" name="addList" placeholder="Add List" required autofocus>
+                        <button type="submit" class="icon add-btn"><i class="fa-solid fa-plus"></i></button>
+                    </form>
+                </li>
+    </ul>
+
+</section>

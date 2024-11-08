@@ -14,10 +14,16 @@
     --light-grey: #C2C2C2;
     --orange: #f59a23;
     --white: #ffffff;
+    --black: #000000;
   }
 
 a {
     text-decoration: none;
+    color: var(--black);
+}
+
+li {
+    list-style: none;
 }
 
 form label > input::placeholder {
@@ -74,6 +80,12 @@ main h1{
     text-align: center;
 }
 
+h2 {
+    font-family: Shopify;
+    font-size: 3.5em;
+    color: var(--dark-green);
+    text-align: center;
+}
 
 /* Home Buttons */
 #home-btns {

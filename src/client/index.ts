@@ -9,7 +9,8 @@ app.set('views', './views');
 
 app.use(express.static('public'));
 
-// Routes
+/* ROUTES */
+
 app.get('/', (req, res) => {
     res.render('home');
 });
@@ -21,6 +22,31 @@ app.get('/login', (req, res) => {
 app.get('/register', (req, res) => {
     res.render('register', { img: 'img/woman.png' });
 });
+
+
+let lists = [
+    {   
+        id: 1,
+        name: "Mom's House",
+        items: ["Item 1", "Item 2", "Item 3"]
+    },
+    {
+        id: 2,
+        name: "FEUP CAFFÉ",
+        items: ["Item 4", "Item 5", "Item 6"]
+    },
+    {
+        id: 3,
+        name: "My Appartment",
+        items: ["Item 7", "Item 8", "Item 9"]
+    }
+]
+
+app.get('/lists', (req, res) => {
+    res.render('lists', {lists: lists});
+});
+
+/* PORT */
 
 const port = process.argv[2] || 3000;
 

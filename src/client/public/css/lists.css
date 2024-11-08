@@ -1,0 +1,44 @@
+#lists > ul {
+    margin: 3em auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1em;
+    max-width: 60em; 
+}
+
+#lists .list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1em;
+    border-radius: 5px;
+    background-color: var(--white);
+    box-shadow: 2px 3px 4px #00000017;
+}
+
+#lists .list-item:hover {
+    background-color: var(--light-green);
+}
+
+#lists .list-item a {
+    color: var(--dark-green);
+}
+
+#lists button {
+    padding: 0em .7em;
+}
+
+#add-list form{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+
+#add-list form input {
+    width: 30%;
+    border-radius: 5px;
+    border: none;
+    font-size: 1em;
+    color: var(--light-grey);
+}
