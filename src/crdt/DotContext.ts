@@ -1,7 +1,17 @@
-type Dot = {
+class Dot {
     id: string;
     version: number;
     tombstone?: boolean;
+
+    constructor(id: string, version: number, tombstone?: boolean) {
+        this.id = id;
+        this.version = version;
+        this.tombstone = tombstone;
+    }
+
+    toString(): string {
+        return `${this.id}:${this.version}${this.tombstone ? ' (tombstone)' : ''}`;
+    }
 }
 
 class DotContext {
@@ -19,13 +29,13 @@ class DotContext {
     makeDot(id: string): Dot {
         const version = this.getVersion(id) + 1;
         this.dots.set(id, { version });
-        return { id, version };
+        return new Dot(id, version);
     }
 
     makeTombstoneDot(id: string): Dot {
         const version = this.getVersion(id) + 1;
         this.dots.set(id, { version, tombstone: true });
-        return { id, version, tombstone: true };
+        return new Dot(id, version, true);
     }
 
     toString(): string {
