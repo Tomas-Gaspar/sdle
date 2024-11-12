@@ -38,6 +38,12 @@ class DotContext {
         return new Dot(id, version, true);
     }
 
+    getDotCount(): number {
+        return Array.from(this.dots.values()).reduce((acc, item) => {
+            return acc + item.version;
+        }, 0);
+    }
+
     toString(): string {
         return "{" + Array.from(this.dots.entries())
             .map(([id, { version, tombstone }]) => `'${id}':${version}${tombstone ? ' (tombstone)' : ''}`)

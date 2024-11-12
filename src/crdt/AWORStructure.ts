@@ -14,12 +14,16 @@ interface AWORVal {
  */
 class AWORStructure<V extends AWORVal> implements CRDT {
     private id: string;
-    public context: DotContext;
+    private context: DotContext;
     private elements: Map<string, V> = new Map();
 
     constructor(id: string, context?: DotContext) {
         this.id = id;
         this.context = context || new DotContext();
+    }
+
+    getContext(): DotContext {
+        return this.context;
     }
 
     add(key: string) {

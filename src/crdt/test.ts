@@ -1,5 +1,5 @@
 import { AWORStructure } from '../crdt/AWORStructure';
-import { PNCounter } from '../crdt/PNCounter';
+import { CausalCounter } from './CausalCounter';
 
 function set1() {
     const a1 = new AWORStructure('A');
@@ -17,8 +17,8 @@ function set1() {
     a1.join(a2);
 
     console.log(a1.toString());
-    console.log(a1.context.toString());
-    console.log(a2.context.toString());
+    console.log(a1.getContext().toString());
+    console.log(a2.getContext().toString());
 }
 
 function set2() {
@@ -38,8 +38,8 @@ function set2() {
     b1.join(b2);
 
     console.log(b1.toString());
-    console.log(b1.context.toString());
-    console.log(b2.context.toString());
+    console.log(b1.getContext().toString());
+    console.log(b2.getContext().toString());
 }
 
 function set3() {
@@ -61,8 +61,8 @@ function set3() {
     c1.join(c2);
 
     console.log(c1.toString());
-    console.log(c1.context.toString());
-    console.log(c2.context.toString());
+    console.log(c1.getContext().toString());
+    console.log(c2.getContext().toString());
 }
 
 function set4() {
@@ -89,17 +89,17 @@ function set4() {
     d1.join(d3);
 
     console.log(d1.toString());
-    console.log(d1.context.toString());
-    console.log(d2.context.toString());
-    console.log(d3.context.toString());
+    console.log(d1.getContext().toString());
+    console.log(d2.getContext().toString());
+    console.log(d3.getContext().toString());
 }
 
 function map1() {
     const map1 = new AWORStructure('A');
     const map2 = new AWORStructure('B');
 
-    const counter1 = new PNCounter();
-    const counter2 = new PNCounter();
+    const counter1 = new CausalCounter('A');
+    const counter2 = new CausalCounter('B');
 
     counter1.inc();
     counter1.inc();
@@ -109,7 +109,7 @@ function map1() {
     map1.put('apple', counter1);
     map1.put('banana', counter2);
 
-    const counter3 = new PNCounter();
+    const counter3 = new CausalCounter('C');
     counter3.inc();
 
     map2.put('banana', counter3);
@@ -121,16 +121,16 @@ function map1() {
     map1.join(map2);
 
     console.log(map1.toString());
-    console.log(map1.context.toString());
-    console.log(map2.context.toString());
+    console.log(map1.getContext().toString());
+    console.log(map2.getContext().toString());
 }
 
 function map2() {
     const map3 = new AWORStructure('A');
     const map4 = new AWORStructure('B');
 
-    const counter1 = new PNCounter();
-    const counter2 = new PNCounter();
+    const counter1 = new CausalCounter('A');
+    const counter2 = new CausalCounter('B');
 
     counter1.inc();
     counter2.inc();
@@ -139,8 +139,8 @@ function map2() {
     map3.put('apple', counter1);
     map3.put('banana', counter2);
 
-    const counter3 = new PNCounter();
-    const counter4 = new PNCounter();
+    const counter3 = new CausalCounter('C');
+    const counter4 = new CausalCounter('D');
 
     counter3.inc();
     counter4.inc();
@@ -155,23 +155,23 @@ function map2() {
     map3.join(map4);
 
     console.log(map3.toString());
-    console.log(map3.context.toString());
-    console.log(map4.context.toString());
+    console.log(map3.getContext().toString());
+    console.log(map4.getContext().toString());
 }
 
 function map3() {
     const map5 = new AWORStructure('A');
     const map6 = new AWORStructure('B');
 
-    const counter1 = new PNCounter();
+    const counter1 = new CausalCounter('A');
 
-    counter1.dec();
+    counter1.inc();
 
     map5.put('apple', counter1);
 
-    const counter2 = new PNCounter();
+    const counter2 = new CausalCounter('B');
 
-    counter2.dec();
+    counter2.inc();
 
     map6.put('apple', counter2);
 
@@ -181,8 +181,18 @@ function map3() {
     map5.join(map6);
 
     console.log(map5.toString());
-    console.log(map5.context.toString());
-    console.log(map6.context.toString());
+
+    console.log(`Pos:${counter1.getContext().pos.toString()}, Neg:${counter1.getContext().neg.toString()}`);
+    console.log(`Pos:${counter2.getContext().pos.toString()}, Neg:${counter2.getContext().neg.toString()}`);
+
+    counter2.inc();
+
+    map5.join(map6);
+
+    console.log(map5.toString());
+
+    console.log(`Pos:${counter1.getContext().pos.toString()}, Neg:${counter1.getContext().neg.toString()}`);
+    console.log(`Pos:${counter2.getContext().pos.toString()}, Neg:${counter2.getContext().neg.toString()}`);
 }
 
 export { set1, set2, set3, set4, map1, map2, map3 };
