@@ -1,10 +1,25 @@
+#lists {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 1em;
+    margin: auto;
+}
+
+#lists > img {
+    max-width: 400px;
+}
+
 #lists > ul {
-    margin: 3em auto;
+    margin: 3em;
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 1em;
-    max-width: 60em; 
+    width: 100%;
+    max-width: 700px; 
+    padding: 0;
 }
 
 #lists .list-item {

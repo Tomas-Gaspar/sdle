@@ -11,19 +11,6 @@ app.use(express.static('public'));
 
 /* ROUTES */
 
-app.get('/', (req, res) => {
-    res.render('home');
-});
-
-app.get('/login', (req, res) => {
-    res.render('login', { img: 'img/woman.png' });
-  });
-
-app.get('/register', (req, res) => {
-    res.render('register', { img: 'img/woman.png' });
-});
-
-
 let lists = [
     {   
         id: 1,
@@ -42,8 +29,16 @@ let lists = [
     }
 ]
 
-app.get('/lists', (req, res) => {
-    res.render('lists', {lists: lists});
+app.get('/', (req, res) => {
+    res.render('home', {lists: lists, img: 'img/woman.png'});
+});
+
+app.get('/login', (req, res) => {
+    res.render('login', { img: 'img/woman.png' });
+  });
+
+app.get('/register', (req, res) => {
+    res.render('register', { img: 'img/woman.png' });
 });
 
 /* PORT */
