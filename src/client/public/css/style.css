@@ -27,30 +27,27 @@ form label > input::placeholder {
     font-size: .8rem;
 }
 
-button {
-    font-weight: 400;
-    color: white;
-    font-size: .8rem;
-    background-color: var(--dark-green);
-    border: 1px solid var(--dark-green);
-    height: 2.9em;
-    border-radius: .5em;
-    transition: .3s;
-}
-
-button:hover{
-    color: var(--dark-green);
-    text-decoration: none;
-    cursor: pointer;
-    background-color: var(--white);
-    border: 1px solid var(--dark-green);
-}
-  
 
 a {
     transition: .3s;
 }
-  
+
+.icon i{
+    color: var(--dark-green);
+    transition: .3s;
+    width: 2em;
+}
+
+.icon i:hover {
+    color: var(--light-green);
+}
+
+button {
+    all: unset;
+    transition: .3s;
+    margin: 0;
+}
+
 
 /* HOME */
   

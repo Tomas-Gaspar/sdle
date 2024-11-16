@@ -32,16 +32,8 @@
     box-shadow: 2px 3px 4px #00000017;
 }
 
-#lists .list-item:hover {
-    background-color: var(--light-green);
-}
-
 #lists .list-item a {
     color: var(--dark-green);
-}
-
-#lists button {
-    padding: 0em .7em;
 }
 
 #add-list form{
