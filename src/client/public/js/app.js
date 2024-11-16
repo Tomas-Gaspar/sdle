@@ -80,7 +80,6 @@ function deleteListHandler() {
 
     let listContainer = document.querySelector('#lists ul');
     let otherLists = listContainer.querySelectorAll('li.shopping-list');
-    console.log(otherLists);
     if (otherLists.length === 0) {
       let newListItem = document.createElement('li');
       newListItem.id = 'no-list';
@@ -104,9 +103,32 @@ function createList(event) {
 
 function createListHandler() {
   if (this.status == 200) {
+    const response = JSON.parse(this.response);
+
     let input = document.querySelector('input[name="createList"]');
     input.value = '';
-    console.log(`New List added ${this.responseText}`);
+
+    let emptyMsg = document.querySelector('#no-list');
+    if (emptyMsg) emptyMsg.remove();
+
+    let newListItem = document.createElement('li');
+    newListItem.className = 'shopping-list list-item';
+    newListItem.setAttribute('data-id', this.responseText);
+
+    newListItem.innerHTML = `
+      <p>${response.title}</p>
+      <div class="action-btns">
+          <a href="${response.id}" class="icon view-btn" title="View list"><i class="fa-solid fa-eye fa-lg"></i></a>
+          <a href="${response.id}/edit" class="icon edit-btn" title="Edit list"><i class="fa-solid fa-pen fa-lg"></i></a>
+          <button class="icon copy-btn" title="Copy list id"><i class="fa-solid fa-copy fa-lg"></i></button>
+          <button class="icon del-btn" title="Delete list"><i class="fa-solid fa-trash fa-lg"></i></button>
+      </div>
+    `;
+
+    let ulElement = document.querySelector('#lists ul');
+    ulElement.appendChild(newListItem);
+
+    addEventListeners();
   }
 }
 

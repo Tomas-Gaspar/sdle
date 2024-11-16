@@ -16,8 +16,9 @@ const apiRoutes = (listModel: List) => {
 
   router.post('/create', async (req, res) => {
     try {
-      await listModel.createList(req.body.listName);
-      res.json(req.body.listName);
+      const listId = await listModel.createList(req.body.listName);
+      const list = await listModel.getList(listId);
+      res.json(list);
       res.status(200).send();
     } catch (err) {
       res.status(500).send();

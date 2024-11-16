@@ -11,6 +11,7 @@ class List {
         return new Promise((resolve, reject) => {
             const query = 'INSERT INTO List (title) VALUES (?)';
             const params: [string] = [title.trim()];
+            
 
             this.db.run(query, params, function (err) {
                 if (err) {
