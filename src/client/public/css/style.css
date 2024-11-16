@@ -39,7 +39,8 @@ a {
 }
 
 .icon i:hover {
-    color: var(--light-green);
+    color: var(--orange);
+    cursor: pointer;
 }
 
 button {
