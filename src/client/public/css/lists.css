@@ -21,6 +21,10 @@
     max-width: 700px; 
     padding: 0;
 }
+#lists #no-list {
+    display: block;
+    text-align: center;
+}
 
 #lists .list-item {
     display: flex;

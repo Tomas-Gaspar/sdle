@@ -30,7 +30,7 @@ let lists = [
 ]
 
 app.get('/', (req, res) => {
-    res.render('home', {lists: lists, img: 'img/woman.png'});
+    res.render('home', {lists: [], img: 'img/woman.png'});
 });
 
 app.get('/:id', (req, res) => {
