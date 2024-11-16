@@ -31,3 +31,5 @@ CREATE TABLE UserList(
     FOREIGN KEY(user_id) REFERENCES User(id),
     FOREIGN KEY(list_id) REFERENCES List(id)
 );
+
+INSERT INTO List(title) VALUES('Grocery List');
