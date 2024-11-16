@@ -40,16 +40,21 @@
     color: var(--dark-green);
 }
 
-#add-list form{
+
+#create-list form, #download-list form{
     width: 100%;
     display: flex;
     justify-content: space-between;
 }
 
-#add-list form input {
+#create-list form input, #download-list form input {
     width: 30%;
     border-radius: 5px;
     border: none;
     font-size: 1em;
     color: var(--light-grey);
+}
+
+#create-list.no-show, #download-list.no-show{
+    display: none;
 }

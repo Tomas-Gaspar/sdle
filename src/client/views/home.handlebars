@@ -1,7 +1,23 @@
 <h2>Shopify</h2>
 
 <section id="lists">
+    <div id="add-btns">
+        <button id="create-btn" class="icon" title="Create list"><i class="fa-solid fa-plus fa-lg"></i></button>
+        <button id="download-btn" class="icon" title="Download list"><i class="fa-solid fa-cloud-arrow-down fa-lg"></i></i></button>           
+    </div>
     <ul>
+        <li id="create-list" class="no-show list-item">
+            <form action="">
+                <input type="text" name="createList" placeholder="Insert list name" required autofocus>
+                <button type="submit" class="icon check-btn"><i class="fa-solid fa-check fa-lg"></i></button>
+            </form>
+        </li>
+        <li id="download-list" class="no-show list-item">
+            <form action="">
+                <input type="text" name="downloadList" placeholder="Insert list ID" required autofocus>
+                <button type="submit" class="icon check-btn"><i class="fa-solid fa-check fa-lg"></i></button>
+            </form>
+        </li>
         {{#if lists}}
             {{#each lists}}
                 <li class="list-item" data-id="{{{this.id}}}">
@@ -20,12 +36,6 @@
                 <p>Create a new list or download an existing one!</p>
             </li>
         {{/if}}
-                <li id="add-list" class="list-item">
-                    <form action="">
-                        <input type="text" name="addList" placeholder="Add List" required autofocus>
-                        <button type="submit" class="icon add-btn"><i class="fa-solid fa-plus"></i></button>
-                    </form>
-                </li>
     </ul>
 
     <img src="{{img}}" alt="woman">
