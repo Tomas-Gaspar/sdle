@@ -13,17 +13,17 @@ app.use(express.static('public'));
 
 let lists = [
     {   
-        id: 1,
+        id: '1',
         name: "Mom's House",
         items: ["Item 1", "Item 2", "Item 3"]
     },
     {
-        id: 2,
+        id: '2',
         name: "FEUP CAFFÉ",
         items: ["Item 4", "Item 5", "Item 6"]
     },
     {
-        id: 3,
+        id: '3',
         name: "My Appartment",
         items: ["Item 7", "Item 8", "Item 9"]
     }
@@ -33,12 +33,16 @@ app.get('/', (req, res) => {
     res.render('home', {lists: lists, img: 'img/woman.png'});
 });
 
-app.get('/login', (req, res) => {
-    res.render('login', { img: 'img/woman.png' });
+app.get('/:id', (req, res) => {
+    const listId = req.params.id;
+    const list = lists.find(item => item.id === listId);
+    res.render('list', { list: list, img: 'img/woman.png' });
   });
 
-app.get('/register', (req, res) => {
-    res.render('register', { img: 'img/woman.png' });
+app.get('/:id/edit', (req, res) => {
+    const listId = req.params.id;
+    const list = lists.find(item => item.id === listId);
+    res.render('edit', { list: list, img: 'img/woman.png' });
 });
 
 /* PORT */
