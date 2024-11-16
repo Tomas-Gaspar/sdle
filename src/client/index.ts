@@ -1,5 +1,7 @@
 import express from 'express';
 import { engine } from 'express-handlebars';
+import { getDatabaseConnection } from './database/init';
+import { List } from './models/List';
 
 const app = express();
 
@@ -8,6 +10,18 @@ app.set('view engine', 'handlebars');
 app.set('views', './views');
 
 app.use(express.static('public'));
+
+/* DATABASE */
+const localDb = getDatabaseConnection();
+
+/* MODELS */
+const listModel = new List(localDb);
+
+async function getAllLists(listModel: List) : Promise<{ id: number, title: string, items: { id: number, name: string, quantity: number }[] }[]> {
+    const listsIDs = await listModel.getAllListsIDs();
+    const lists = await Promise.all(listsIDs.map(id => listModel.getList(id)));
+    return lists;
+}
 
 /* ROUTES */
 
@@ -24,25 +38,8 @@ app.get('/register', (req, res) => {
 });
 
 
-let lists = [
-    {   
-        id: 1,
-        name: "Mom's House",
-        items: ["Item 1", "Item 2", "Item 3"]
-    },
-    {
-        id: 2,
-        name: "FEUP CAFFÉ",
-        items: ["Item 4", "Item 5", "Item 6"]
-    },
-    {
-        id: 3,
-        name: "My Appartment",
-        items: ["Item 7", "Item 8", "Item 9"]
-    }
-]
-
-app.get('/lists', (req, res) => {
+app.get('/lists', async (req, res) => {
+    const lists = await getAllLists(listModel);
     res.render('lists', {lists: lists});
 });
 
