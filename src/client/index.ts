@@ -1,5 +1,7 @@
 import express from 'express';
 import { engine } from 'express-handlebars';
+import { getDatabaseConnection } from './database/init';
+import { List } from './models/List';
 
 const app = express();
 
@@ -9,39 +11,30 @@ app.set('views', './views');
 
 app.use(express.static('public'));
 
+/* DATABASE */
+const localDb = getDatabaseConnection();
+
+/* MODELS */
+const listModel = new List(localDb);
+
+
 /* ROUTES */
 
-let lists = [
-    {   
-        id: '1',
-        name: "Mom's House",
-        items: ["Item 1", "Item 2", "Item 3"]
-    },
-    {
-        id: '2',
-        name: "FEUP CAFFÉ",
-        items: ["Item 4", "Item 5", "Item 6"]
-    },
-    {
-        id: '3',
-        name: "My Appartment",
-        items: ["Item 7", "Item 8", "Item 9"]
-    }
-]
-
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
+    const listsIDs = await listModel.getAllListsIDs();
+    const lists = await Promise.all(listsIDs.map(id => listModel.getList(id)));
     res.render('home', {lists: lists, img: 'img/woman.png'});
 });
 
-app.get('/:id', (req, res) => {
-    const listId = req.params.id;
-    const list = lists.find(item => item.id === listId);
+app.get('/:id', async (req, res) => {
+    const listId = parseInt(req.params.id, 10);
+    const list = await listModel.getList(listId);
     res.render('list', { list: list, img: 'img/woman.png' });
   });
 
-app.get('/:id/edit', (req, res) => {
-    const listId = req.params.id;
-    const list = lists.find(item => item.id === listId);
+app.get('/:id/edit', async (req, res) => {
+    const listId = parseInt(req.params.id, 10);
+    const list = await listModel.getList(listId);
     res.render('edit', { list: list, img: 'img/woman.png' });
 });
 
@@ -52,3 +45,4 @@ const port = process.argv[2] || 3000;
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
+
