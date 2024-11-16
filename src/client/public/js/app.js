@@ -1,3 +1,20 @@
+function encodeForAjax(data) {
+  if (data == null) return null;
+  return Object.keys(data).map(function(k){
+    return encodeURIComponent(k) + '=' + encodeURIComponent(data[k])
+  }).join('&');
+}
+  
+function sendAjaxRequest(method, url, data, handler) {
+  let request = new XMLHttpRequest();
+
+  request.open(method, url, true);
+  // request.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').content);
+  request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+  request.addEventListener('load', handler);
+  request.send(encodeForAjax(data));
+}
+  
 function addEventListeners() {
 
     let createListBtn = document.getElementById('create-btn');
@@ -49,8 +66,15 @@ function confirmDelete (event){
 }
 
 function deleteList(event) {
-    const listId = event.target.closest('li').getAttribute('data-id');
-    console.log("Deleting list with id: " + listId);
+  const listId = event.target.closest('li').getAttribute('data-id');
+  sendAjaxRequest('post', '/api/remove', {listId: listId}, deleteListHandler);
+}
+
+function deleteListHandler() {
+  if (this.status == 200) {
+    let list = document.querySelector(`li[data-id=${this.responseText}]`);
+    list.remove();
+  }
 }
 
 addEventListeners();
