@@ -14,6 +14,16 @@ const apiRoutes = (listModel: List) => {
     }
   });
 
+  router.post('/create', async (req, res) => {
+    try {
+      await listModel.createList(req.body.listName);
+      res.json(req.body.listName);
+      res.status(200).send();
+    } catch (err) {
+      res.status(500).send();
+    }
+  });
+
   return router;
 };
 

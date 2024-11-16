@@ -20,6 +20,9 @@ function addEventListeners() {
     let createListBtn = document.getElementById('create-btn');
     if (createListBtn) createListBtn.addEventListener('click', showCreateList);
 
+    let createCheckListBtn = document.getElementById('create-check-btn');
+    if (createCheckListBtn) createCheckListBtn.addEventListener('click', createList);
+
     let downloadListBtn = document.getElementById('download-btn');
     if (downloadListBtn) downloadListBtn.addEventListener('click', showDownloadList);
 
@@ -74,6 +77,36 @@ function deleteListHandler() {
   if (this.status == 200) {
     let list = document.querySelector(`li[data-id=${this.responseText}]`);
     list.remove();
+
+    let listContainer = document.querySelector('#lists ul');
+    let otherLists = listContainer.querySelectorAll('li.shopping-list');
+    console.log(otherLists);
+    if (otherLists.length === 0) {
+      let newListItem = document.createElement('li');
+      newListItem.id = 'no-list';
+      newListItem.className = 'list-item';
+      newListItem.innerHTML = `
+        <p>You have yet to add any list to this device!</p>
+        <p>Create a new list or download an existing one!</p>
+      `;
+
+      listContainer.appendChild(newListItem);
+    }
+  }
+}
+
+function createList(event) {
+  event.preventDefault();
+  const listName = document.querySelector('input[name="createList"]').value;
+  if (listName !== '')
+    sendAjaxRequest('post', '/api/create', {listName: listName}, createListHandler);
+}
+
+function createListHandler() {
+  if (this.status == 200) {
+    let input = document.querySelector('input[name="createList"]');
+    input.value = '';
+    console.log(`New List added ${this.responseText}`);
   }
 }
 
