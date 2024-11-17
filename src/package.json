@@ -2,8 +2,12 @@
     "name": "shopping-list",
     "private": true,
     "workspaces": [
-      "client",
-      "server",
-      "proxy"
-    ]
+        "client",
+        "server",
+        "proxy"
+    ],
+    "dependencies": {
+        "crypto": "^1.0.1",
+        "zeromq": "^6.1.2"
+    }
 }

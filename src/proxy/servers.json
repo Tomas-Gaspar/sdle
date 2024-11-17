@@ -1,0 +1,5 @@
+{
+    "num_virtual_nodes": 3,
+    "num_replicas": 3,
+    "ports": [5000, 5001, 5002]
+}
