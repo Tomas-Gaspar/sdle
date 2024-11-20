@@ -5,28 +5,47 @@ if (process.argv.length < 3 || isNaN(parseInt(process.argv[2]))) {
     process.exit(1);
 }
 
+let serverConf
+    : { 
+        num_virtual_nodes: number, 
+        num_replicas: number,
+        ports: number[] 
+    };
+
 const socket = new zmq.Request();
 
 async function start() {
     socket.connect('tcp://127.0.0.1:5555');
-
-    await socket.send(['ready', process.argv[2]]);
+    socket.send(['ready', process.argv[2]]);
 
     for await (const [header, ...req] of socket) {
         switch (header.toString()) {
-            case 'error':
-                throw new Error(req[0].toString());
-            case 'request':
+            case 'ready':
+                serverConf = {
+                    num_virtual_nodes: parseInt(req[0].toString()),
+                    num_replicas: parseInt(req[1].toString()),
+                    ports: req[2].toString().split(',').map(port => parseInt(port))
+                };
+                socket.send(['ready', null]);
                 break;
+            case 'request':
+                processRequest(req);
+            case 'error':
+                throw new Error(`Error: ${req[0].toString()}`);
             default:
                 break;
         }
     }
 }
 
+function processRequest(req: Buffer[]) {
+    const client = req[0];
+    
+}
+
 async function stop() {
     if (!socket.closed) {
-        await socket.send(['disconnect', '"service"'])
+        await socket.send(['disconnect']);
         socket.close()
     }
 }
