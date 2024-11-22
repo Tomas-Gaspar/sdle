@@ -10,15 +10,15 @@ const serverConf
     } = JSON.parse(readFileSync('servers.json', 'utf-8'));
 
 const portHashes: Map<number, { hashes: string[] }> = new Map();
-const hashes: { hash: string, socket: Buffer | undefined }[] = [];
-const availableSocks: Set<Buffer> = new Set();
+const hashes: { hash: string, socket: Buffer | undefined, replica: number }[] = [];
 
 serverConf.ports.forEach(port => {
     portHashes.set(port, { hashes: [] });
     for (let i = 0; i < serverConf.num_replicas; i++) {
         const hash = {
             hash: createHash('sha256').update(`${port}:${i}`).digest('hex'),
-            socket: undefined
+            socket: undefined,
+            replica: 0
         };
         hashes.push(hash);
         portHashes.get(port)?.hashes.push(hash.hash);
@@ -43,9 +43,6 @@ async function start() {
                 if (portInfo) {
                     for (const h of hashes) {
                         if (portInfo.hashes.includes(h.hash)) {
-                            if (h.socket)
-                                availableSocks.delete(h.socket);
-
                             h.socket = sender;
                         }
                     }
@@ -55,15 +52,17 @@ async function start() {
 
                 break;
             case 'reply':
-                availableSocks.add(sender);
-                
                 const client = rest[0];
                 if (client.length !== 0)
                     frontend.send([client, null, ...rest.slice(1)]);
 
                 break;
             case 'disconnect':
-                availableSocks.delete(sender);
+                for (const h of hashes) {
+                    if (h.socket === sender) {
+                        h.socket = undefined;
+                    }
+                }
                 break;
             default:
                 console.error(`unknown header: ${header.toString()} from ${sender.toString("hex")}`);
@@ -76,20 +75,22 @@ async function start() {
 
         for (let i = 0; i < hashes.length; i++) {
             if (hash > hashes[i].hash) {
+                let replica = hashes[(i+1) % hashes.length].replica;
                 let sent = false;
-                for (let j = i + 1; j <= (i + 1) + serverConf.num_replicas; j++) {
-                    const socket = hashes[j % hashes.length].socket;
-                    if (socket !== undefined && availableSocks.has(socket)) {
-                        availableSocks.delete(socket);
-                        sent = true;
+                for (let j = 0; j < serverConf.num_replicas && !sent; j++) {
+                    const socket = hashes[(i + 1 + replica) % hashes.length].socket;
+                    replica = (replica + 1) % serverConf.num_replicas;
 
+                    if (socket !== undefined) {
+                        hashes[(i+1) % hashes.length].replica = replica;
+
+                        sent = true;
                         backend.send([socket, null, 'request', sender, ...rest]);
-                        break;
                     }
                 }
 
                 if (!sent) {
-                    // send back error, no available servers
+                    frontend.send([sender, null, 'error', 'no servers available']);
                 }
                 break;
             }
