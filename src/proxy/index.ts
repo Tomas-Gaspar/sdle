@@ -29,10 +29,36 @@ hashes.sort((a, b) => a.hash < b.hash ? -1 : 1);
 const frontend = new zmq.Router();
 const backend = new zmq.Router();
 
-async function start() {
-    await frontend.bind('tcp://127.0.0.1:5556');
-    await backend.bind('tcp://127.0.0.1:5555');
+async function handleFrontend() {
+    for await (const [sender, _blank, ...rest] of frontend) {
+        const hash = createHash('sha256').update(rest[0]).digest('hex');
 
+        for (let i = 0; i < hashes.length; i++) {
+            if (hash > hashes[i].hash) {
+                let replica = hashes[(i+1) % hashes.length].replica;
+                let sent = false;
+                for (let j = 0; j < serverConf.num_replicas && !sent; j++) {
+                    const socket = hashes[(i + 1 + replica) % hashes.length].socket;
+                    replica = (replica + 1) % serverConf.num_replicas;
+
+                    if (socket !== undefined) {
+                        hashes[(i+1) % hashes.length].replica = replica;
+
+                        sent = true;
+                        backend.send([socket, null, 'request', sender, ...rest]);
+                    }
+                }
+
+                if (!sent) {
+                    frontend.send([sender, null, 'error', 'no servers available']);
+                }
+                break;
+            }
+        }
+    }
+}
+
+async function handleBackend() {
     for await (const [sender, _blank, header, ...rest] of backend) {
         switch (header.toString()) {
             case 'ready':
@@ -67,34 +93,17 @@ async function start() {
                 console.error(`unknown header: ${header.toString()} from ${sender.toString("hex")}`);
                 break;
         }
-    }
+    }   
+}
 
-    for await (const [sender, _blank, ...rest] of frontend) {
-        const hash = createHash('sha256').update(rest[0]).digest('hex');
+async function start() {
+    await frontend.bind('tcp://127.0.0.1:5556');
+    await backend.bind('tcp://127.0.0.1:5555');
 
-        for (let i = 0; i < hashes.length; i++) {
-            if (hash > hashes[i].hash) {
-                let replica = hashes[(i+1) % hashes.length].replica;
-                let sent = false;
-                for (let j = 0; j < serverConf.num_replicas && !sent; j++) {
-                    const socket = hashes[(i + 1 + replica) % hashes.length].socket;
-                    replica = (replica + 1) % serverConf.num_replicas;
-
-                    if (socket !== undefined) {
-                        hashes[(i+1) % hashes.length].replica = replica;
-
-                        sent = true;
-                        backend.send([socket, null, 'request', sender, ...rest]);
-                    }
-                }
-
-                if (!sent) {
-                    frontend.send([sender, null, 'error', 'no servers available']);
-                }
-                break;
-            }
-        }
-    }
+    await Promise.all([
+        handleFrontend(), 
+        handleBackend()
+    ]);
 }
 
 process.stdin.on('data', (data) => {
