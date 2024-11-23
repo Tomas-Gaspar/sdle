@@ -1,1 +1,26 @@
 <h2>{{{list.title}}}</h2>
+
+<section id="lists">
+    <div id="add-btns">
+        <a href="{{{list.id}}}/edit" class="icon edit-btn" title="Edit list"><i class="fa-solid fa-pen fa-lg"></i></a>
+    </div>
+    <ul>
+        {{#if list.items}}
+            {{#each list.items}}
+                <li class="shopping-list list-item" data-id="{{{this.id}}}">
+                    <p>{{this.name}}</p>
+                    <div class="action-btns">
+                        
+                    </div>
+                </li>
+            {{/each}}
+        {{else}}
+            <li id="no-list" class="list-item">
+                <p>You have yet to add any items to this list!</p>
+                <p>Click on the pencil icon to start editing!</p>
+            </li>
+        {{/if}}
+    </ul>
+
+    <img src="{{img}}" alt="woman">
+</section>
