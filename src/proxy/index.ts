@@ -36,8 +36,6 @@ async function start() {
     for await (const [sender, _blank, header, ...rest] of backend) {
         switch (header.toString()) {
             case 'ready':
-                backend.send([sender, null, 'ready', serverConf.num_virtual_nodes.toString(), serverConf.num_replicas.toString(), serverConf.ports.join(',')]);
-
                 const port = parseInt(rest[0].toString());
                 const portInfo = portHashes.get(port);
                 if (portInfo) {
@@ -46,6 +44,7 @@ async function start() {
                             h.socket = sender;
                         }
                     }
+                    backend.send([sender, null, 'ready', serverConf.num_virtual_nodes.toString(), serverConf.num_replicas.toString(), serverConf.ports.join(',')]);
                 } else {
                     backend.send([sender, null, 'error', 'port not part of hash ring']);
                 }
