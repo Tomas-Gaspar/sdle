@@ -35,16 +35,42 @@ function addEventListeners() {
     [].forEach.call(deleteListBtn, function(btn) {
         btn.addEventListener('click', confirmDelete);
     });
+
+    let addItemBtn = document.getElementById('add-item-btn');
+    if (addItemBtn) addItemBtn.addEventListener('click', showAddItem);
+
+    let addCheckItemBtn = document.getElementById('add-item-check-btn');
+    if (addCheckItemBtn) addCheckItemBtn.addEventListener('click', addItem);
+
+    let deleteItemBtn = document.querySelectorAll('.del-item-btn');
+    [].forEach.call(deleteItemBtn, function(btn) {
+        btn.addEventListener('click', confirmItemDelete);
+    });
 }
 
 function showCreateList() {
     let createListItem = document.getElementById('create-list');
     createListItem.classList.toggle('no-show');
+
+    let downloadListItem = document.getElementById('download-list');
+    if (!downloadListItem.classList.contains('no-show')) {
+      downloadListItem.classList.toggle('no-show');
+    }
+}
+
+function showAddItem() {
+  let addItem = document.getElementById('add-item');
+  addItem.classList.toggle('no-show');
 }
 
 function showDownloadList() {
   let downloadListItem = document.getElementById('download-list');
   downloadListItem.classList.toggle('no-show');
+
+  let createListItem = document.getElementById('create-list');
+  if (!createListItem.classList.contains('no-show')) {
+    createListItem.classList.toggle('no-show');
+  }
 }
 
 function copyList(event) {
@@ -94,6 +120,47 @@ function deleteListHandler() {
   }
 }
 
+function confirmItemDelete (event){
+  Swal.fire({
+    title: "Are you sure?",
+    text: "You won't be able to revert this!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#304700",
+    cancelButtonColor: "#C2C2C2",
+    confirmButtonText: "Yes"
+  }).then((result) => {
+    if (result.isConfirmed) {
+      deleteItem(event);
+    }
+  });
+}
+
+function deleteItem(event) {
+  const itemId = event.target.closest('li').getAttribute('data-id');
+  sendAjaxRequest('post', '/api/item/remove', {itemId: itemId}, deleteItemHandler);
+}
+
+function deleteItemHandler() {
+  if (this.status == 200) {
+    let item = document.querySelector(`li[data-id=${this.responseText}]`);
+    item.remove();
+    
+    let listContainer = document.querySelector('#lists ul');
+    let otherLists = listContainer.querySelectorAll('li.shopping-item');
+    if (otherLists.length === 0) {
+      let newListItem = document.createElement('li');
+      newListItem.id = 'no-item';
+      newListItem.className = 'list-item';
+      newListItem.innerHTML = `
+        <p>You have yet to add any items to this list!</p>
+      `;
+
+      listContainer.appendChild(newListItem);
+    }
+  }
+}
+
 function createList(event) {
   event.preventDefault();
   const listName = document.querySelector('input[name="createList"]').value;
@@ -107,13 +174,15 @@ function createListHandler() {
 
     let input = document.querySelector('input[name="createList"]');
     input.value = '';
+    let inputListItem = input.closest('li');
+    inputListItem.classList.toggle('no-show');
 
     let emptyMsg = document.querySelector('#no-list');
     if (emptyMsg) emptyMsg.remove();
 
     let newListItem = document.createElement('li');
     newListItem.className = 'shopping-list list-item';
-    newListItem.setAttribute('data-id', this.responseText);
+    newListItem.setAttribute('data-id', response.id);
 
     newListItem.innerHTML = `
       <p>${response.title}</p>
@@ -131,5 +200,44 @@ function createListHandler() {
     addEventListeners();
   }
 }
+
+  function addItem(event) {
+    event.preventDefault();
+    const listId = event.target.closest('section').getAttribute('data-id');
+    const itemName = document.querySelector('input[name="addItem"]').value;
+    if (itemName !== '')
+      sendAjaxRequest('post', '/api/item/create', {listId: listId, itemName: itemName, itemQuantity: 5}, addItemHandler);
+  }
+  
+  function addItemHandler() {
+    if (this.status == 200) {
+      const response = JSON.parse(this.response);
+      console.log(response);
+  
+      let input = document.querySelector('input[name="addItem"]');
+      input.value = '';
+      let inputListItem = input.closest('li');
+      inputListItem.classList.toggle('no-show');
+
+      let emptyMsg = document.querySelector('#no-item');
+      if (emptyMsg) emptyMsg.remove();
+  
+      let newListItem = document.createElement('li');
+      newListItem.className = 'shopping-item list-item';
+      newListItem.setAttribute('data-id', response.id);
+  
+      newListItem.innerHTML = `
+        <p>${response.name}</p>
+        <div class="action-btns">
+            <button class="icon del-item-btn" title="Delete item"><i class="fa-solid fa-trash fa-lg"></i></button>
+        </div>
+      `;
+  
+      let ulElement = document.querySelector('#lists ul');
+      ulElement.appendChild(newListItem);
+  
+      addEventListeners();
+    }
+  }
 
 addEventListeners();

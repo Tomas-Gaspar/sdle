@@ -25,7 +25,7 @@
     max-width: 750px; 
     padding: 0;
 }
-#lists #no-list {
+#lists #no-list, #lists #no-item {
     display: block;
     text-align: center;
 }
@@ -45,13 +45,13 @@
 }
 
 
-#create-list form, #download-list form{
+#create-list form, #download-list form, #add-item form {
     width: 100%;
     display: flex;
     justify-content: space-between;
 }
 
-#create-list form input, #download-list form input {
+#create-list form input, #download-list form input, #add-item form input {
     width: 30%;
     border-radius: 5px;
     border: none;
@@ -59,6 +59,6 @@
     color: var(--light-grey);
 }
 
-#create-list.no-show, #download-list.no-show{
+#create-list.no-show, #download-list.no-show, #add-item.no-show {
     display: none;
 }
