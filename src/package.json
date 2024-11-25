@@ -9,7 +9,15 @@
     "dependencies": {
         "crypto": "^1.0.1",
         "zeromq": "^6.1.2",
+        "sqlite3": "^5.1.7",
+        "express": "^4.21.1"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.0",
+        "@types/node": "^22.9.0",
         "@types/sqlite3": "^3.1.11",
-        "sqlite3": "^5.1.7"
+        "ts-node": "^10.9.2",
+        "typescript": "^5.6.3",
+        "nodemon": "^3.1.7"
     }
 }
