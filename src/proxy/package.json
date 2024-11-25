@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Server side of the shopping list app",
   "main": "index.ts",
-  "type": "module",
   "scripts": {
     "start": "nodemon index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
