@@ -8,6 +8,8 @@
     ],
     "dependencies": {
         "crypto": "^1.0.1",
-        "zeromq": "^6.1.2"
+        "zeromq": "^6.1.2",
+        "@types/sqlite3": "^3.1.11",
+        "sqlite3": "^5.1.7"
     }
 }
