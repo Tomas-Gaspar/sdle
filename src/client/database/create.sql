@@ -1,15 +1,7 @@
 PRAGMA FOREIGN_KEY = ON;
 
-DROP TABLE IF EXISTS UserList;
 DROP TABLE IF EXISTS Item;
 DROP TABLE IF EXISTS List;
-DROP TABLE IF EXISTS Users;
-
-CREATE TABLE Users(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username VARCHAR(20) UNIQUE NOT NULL,
-    password VARCHAR(20) NOT NULL
-);
 
 CREATE TABLE List(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,12 +16,6 @@ CREATE TABLE Item(
     FOREIGN KEY(list_id) REFERENCES List(id)
 );
 
-CREATE TABLE UserList(
-    user_id INTEGER NOT NULL,
-    list_id INTEGER NOT NULL,
-    PRIMARY KEY(user_id, list_id),
-    FOREIGN KEY(user_id) REFERENCES User(id),
-    FOREIGN KEY(list_id) REFERENCES List(id)
-);
-
 INSERT INTO List(title) VALUES('Grocery List');
+INSERT INTO Item(name, quantity, list_id) VALUES('bananas', 5, 1);
+INSERT INTO Item(name, quantity, list_id) VALUES('pears', 2, 1);

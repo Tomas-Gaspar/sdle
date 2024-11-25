@@ -22,7 +22,7 @@ const websiteRoutes = (listModel: List) => {
         const listId = parseInt(req.params.id, 10);
         const list = await listModel.getList(listId);
         
-        res.render('edit', { list: list, img: 'img/woman.png' });
+        res.render('edit', { list: list, img: '../img/woman.png' });
     });
   
     return router;
