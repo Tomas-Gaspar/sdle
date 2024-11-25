@@ -1,6 +1,42 @@
-<h1>Shopify</h1>
+<h2>Shopify</h2>
 
-<section id="home-btns">
-    <a id="login-btn" href="/login">Login</a>
-    <a id="register-btn" href="/register">Register</a>
+<section id="lists">
+    <div id="add-btns">
+        <button id="create-btn" class="icon" title="Create list"><i class="fa-solid fa-plus fa-lg"></i></button>
+        <button id="download-btn" class="icon" title="Download list"><i class="fa-solid fa-cloud-arrow-down fa-lg"></i></i></button>           
+    </div>
+    <ul>
+        <li id="create-list" class="no-show list-item">
+            <form>
+                <input type="text" name="createList" placeholder="Insert list name" required autofocus>
+                <button id="create-check-btn" class="icon check-btn"><i class="fa-solid fa-check fa-lg"></i></button>
+            </form>
+        </li>
+        <li id="download-list" class="no-show list-item">
+            <form action="">
+                <input type="text" name="downloadList" placeholder="Insert list ID" required autofocus>
+                <button type="submit" class="icon check-btn"><i class="fa-solid fa-check fa-lg"></i></button>
+            </form>
+        </li>
+        {{#if lists}}
+            {{#each lists}}
+                <li class="shopping-list list-item" data-id="{{{this.id}}}">
+                    <p>{{this.title}}</p>
+                    <div class="action-btns">
+                        <a href="{{{this.id}}}" class="icon view-btn" title="View list"><i class="fa-solid fa-eye fa-lg"></i></a>
+                        <a href="{{{this.id}}}/edit" class="icon edit-btn" title="Edit list"><i class="fa-solid fa-pen fa-lg"></i></a>
+                        <button class="icon copy-btn" title="Copy list id"><i class="fa-solid fa-copy fa-lg"></i></button>
+                        <button class="icon del-btn" title="Delete list"><i class="fa-solid fa-trash fa-lg"></i></button>
+                    </div>
+                </li>
+            {{/each}}
+        {{else}}
+            <li id="no-list" class="list-item">
+                <p>You have yet to add any list to this device!</p>
+                <p>Create a new list or download an existing one!</p>
+            </li>
+        {{/if}}
+    </ul>
+
+    <img src="{{img}}" alt="woman">
 </section>
