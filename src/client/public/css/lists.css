@@ -62,3 +62,14 @@
 #create-list.no-show, #download-list.no-show, #add-item.no-show {
     display: none;
 }
+
+@media (max-width: 60em) {
+    #lists > img {
+        display: none;
+    }
+
+    #lists > ul {
+        grid-area: 2 / 1 / span 1 / span 2;
+    }
+
+}
