@@ -12,6 +12,15 @@ class Dot {
     toString(): string {
         return `${this.id}:${this.version}${this.tombstone ? ' (tombstone)' : ''}`;
     }
+
+    static fromString(str: string): Dot {
+        const split = str.split(':');
+        const id = split[0];
+        const version = parseInt(split[1].split(' ')[0]);
+        const tombstone = str.includes('(tombstone)');
+
+        return new Dot(id, version, tombstone);
+    }
 }
 
 class DotContext {
@@ -46,8 +55,24 @@ class DotContext {
 
     toString(): string {
         return "{" + Array.from(this.dots.entries())
-            .map(([id, { version, tombstone }]) => `'${id}':${version}${tombstone ? ' (tombstone)' : ''}`)
+            .map(([id, { version, tombstone }]) => `${id}:${version}${tombstone ? ' (tombstone)' : ''}`)
             .join(" ") + "}";
+    }
+
+    static fromString(str: string): DotContext {
+        const dotContext = new DotContext();
+        const split = str.slice(1, -1).split(' ');
+        if (split[0] === '') return dotContext;
+
+        for (const entry of split) {
+            const splitEntry = entry.split(':');
+            const id = splitEntry[0];
+            const version = parseInt(splitEntry[1].split(' ')[0]);
+            const tombstone = entry.includes('(tombstone)');
+            dotContext.dots.set(id, { version, tombstone });
+        }
+
+        return dotContext;
     }
 }
 

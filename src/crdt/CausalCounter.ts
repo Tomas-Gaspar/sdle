@@ -6,10 +6,10 @@ class CausalCounter implements CRDT {
     private pos: AWORStructure<{ dot: Dot }>;
     private neg: AWORStructure<{ dot: Dot }>;
 
-    constructor(id: string, context?: DotContext) {
+    constructor(id: string, pos?: DotContext, neg?: DotContext) {
         this.id = id;
-        this.pos = new AWORStructure(id, context);
-        this.neg = new AWORStructure(id, context);
+        this.pos = new AWORStructure(id, pos);
+        this.neg = new AWORStructure(id, neg);
     }
 
     inc(n = 1): void {
@@ -31,6 +31,10 @@ class CausalCounter implements CRDT {
     join(other: CausalCounter): void {
         this.pos.join(other.pos);
         this.neg.join(other.neg);
+
+        const value = this.value();
+        if (value < 0)
+            this.inc(-value);
     }
 
     getContext(): {pos: DotContext, neg: DotContext} {
