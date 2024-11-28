@@ -12,14 +12,14 @@ const websiteRoutes = (listModel: List) => {
     });
   
     router.get('/:id', async (req, res) => {
-        const listId = parseInt(req.params.id, 10);
+        const listId = req.params.id;
         const list = await listModel.getList(listId);
 
         res.render('list', { list: list, img: 'img/woman.png' });
     });
   
     router.get('/:id/edit', async (req, res) => {
-        const listId = parseInt(req.params.id, 10);
+        const listId = req.params.id;
         const list = await listModel.getList(listId);
         
         res.render('edit', { list: list, img: '../img/woman.png' });

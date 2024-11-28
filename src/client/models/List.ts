@@ -1,4 +1,5 @@
 import sqlite from 'sqlite3';
+import { v4 as uuidv4 } from 'uuid';
 
 class List {
     private db: sqlite.Database;
@@ -7,60 +8,62 @@ class List {
         this.db = db;
     }
 
-    createList(title: string): Promise<number> {
+    createList(title: string): Promise<string> {
         return new Promise((resolve, reject) => {
-            const query = 'INSERT INTO List (title) VALUES (?)';
-            const params: [string] = [title.trim()];
+            const query = 'INSERT INTO List (uuid, title) VALUES (?, ?)';
+            const uuid = uuidv4();
+            const params: [string, string] = [uuid, title.trim()];
             
 
             this.db.run(query, params, function (err) {
                 if (err) {
+                    console.log("pilas")
                     return reject(err);
                 }
-                resolve(this.lastID);
+                resolve(uuid);
             });
         });
     }
 
-    getAllListsIDs(): Promise<number[]> {
+    getAllListsIDs(): Promise<string[]> {
         return new Promise((resolve, reject) => {
-            const query = 'SELECT id FROM List';
+            const query = 'SELECT uuid FROM List';
 
-            this.db.all(query, (err, rows: { id: number }[]) => {
+            this.db.all(query, (err, rows: { uuid: string }[]) => {
                 if (err) {
                     return reject(err);
                 }
-                resolve(rows.map(row => row.id));
+                resolve(rows.map(row => row.uuid));
             });
         });
     }
 
-    getList(listId: number): Promise<{ id: number, title: string, items: { id: number, name: string, quantity: number }[] }> {
+    getList(listUuid: string): Promise<{ uuid: string, title: string, items: { uuid: string, name: string, quantity: number }[] }> {
         return new Promise((resolve, reject) => {
-            const queryList = 'SELECT * FROM List WHERE id = ?';
-            const queryItems = 'SELECT * FROM Item WHERE list_id = ?';
-            const params: [number] = [listId];
+            const queryList = 'SELECT * FROM List WHERE uuid = ?';
+            const queryItems = 'SELECT * FROM Item WHERE list_uuid = ?';
+            const params: [string] = [listUuid];
 
             this.db.serialize(() => {
-                this.db.get(queryList, params, (err, row: { id: number, title: string }) => {
+                this.db.get(queryList, params, (err, row: { uuid: string, title: string }) => {
                     if (err) {
                         return reject(err);
                     }
-                    this.db.all(queryItems, params, (err, rows: { id: number, name: string, quantity: number }[] ) => {
+                    this.db.all(queryItems, params, (err, rows: { uuid: string, name: string, quantity: number }[] ) => {
                         if (err) {
                             return reject(err);
                         }
-                        resolve({ id: row.id, title: row.title, items: rows });
+                        resolve({ uuid: row.uuid, title: row.title, items: rows });
                     });
                 });
             });
         });
     }
 
-    updateListTitle(listId: number, title: string): Promise<void> {
+    updateListTitle(listUuid: string, title: string): Promise<void> {
         return new Promise((resolve, reject) => {
-            const query = 'UPDATE List SET title = ? WHERE id = ?';
-            const params: [string, number] = [title.trim(), listId];
+            const query = 'UPDATE List SET title = ? WHERE uuid = ?';
+            const params: [string, string] = [title.trim(), listUuid];
 
             this.db.run(query, params, function (err) {
                 if (err) {
@@ -71,10 +74,10 @@ class List {
         });
     }
 
-    deleteList(listId: number): Promise<void> {
+    deleteList(listUuid: string): Promise<void> {
         return new Promise((resolve, reject) => {
-            const query = 'DELETE FROM List WHERE id = ?';
-            const params: [number] = [listId];
+            const query = 'DELETE FROM List WHERE uuid = ?';
+            const params: [string] = [listUuid];
 
             this.db.run(query, params, function (err) {
                 if (err) {
@@ -85,12 +88,12 @@ class List {
         });
     }
 
-    getItem(itemId: number): Promise<{ id: number, name: string, quantity: number }> {
+    getItem(itemUuid: string): Promise<{ uuid: string, name: string, quantity: number }> {
         return new Promise((resolve, reject) => {
-            const query = 'SELECT * FROM Item WHERE id = ?';
-            const params: [number] = [itemId];
+            const query = 'SELECT * FROM Item WHERE uuid = ?';
+            const params: [string] = [itemUuid];
 
-            this.db.get(query, params, (err, row: { id: number, name: string, quantity: number }) => {
+            this.db.get(query, params, (err, row: { uuid: string, name: string, quantity: number }) => {
                 if (err) {
                     return reject(err);
                 }
@@ -99,24 +102,25 @@ class List {
         });
     }
 
-    insertItem(listId: number, name: string, quantity: number): Promise<number> {
+    insertItem(listUuid: string, name: string, quantity: number): Promise<string> {
         return new Promise((resolve, reject) => {
-            const query = 'INSERT INTO Item (list_id, name, quantity) VALUES (?, ?, ?)';
-            const params: [number, string, number] = [listId, name.trim(), quantity];
+            const query = 'INSERT INTO Item (uuid, list_uuid, name, quantity) VALUES (?, ?, ?, ?)';
+            const uuid = uuidv4();
+            const params: [string, string, string, number] = [uuid, listUuid, name.trim(), quantity];
 
             this.db.run(query, params, function (err) {
                 if (err) {
                     return reject(err);
                 }
-                resolve(this.lastID);
+                resolve(uuid);
             });
         });
     }
 
-    updateItem(itemId: number, name: string, quantity: number): Promise<void> {
+    updateItem(itemUuid: string, name: string, quantity: number): Promise<void> {
         return new Promise((resolve, reject) => {
-            const query = 'UPDATE Item SET name = ?, quantity = ? WHERE id = ?';
-            const params: [string, number, number] = [name.trim(), quantity, itemId];
+            const query = 'UPDATE Item SET name = ?, quantity = ? WHERE uuid = ?';
+            const params: [string, number, string] = [name.trim(), quantity, itemUuid];
 
             this.db.run(query, params, function (err) {
                 if (err) {
@@ -127,10 +131,10 @@ class List {
         });
     }
 
-    deleteItem(itemId: number): Promise<void> {
+    deleteItem(itemUuid: string): Promise<void> {
         return new Promise((resolve, reject) => {
-            const query = 'DELETE FROM Item WHERE id = ?';
-            const params: [number] = [itemId];
+            const query = 'DELETE FROM Item WHERE uuid = ?';
+            const params: [string] = [itemUuid];
 
             this.db.run(query, params, function (err) {
                 if (err) {
