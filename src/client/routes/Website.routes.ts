@@ -1,28 +1,29 @@
 import { Router } from 'express';
-import { List } from '../models/List';
+import { list, ListModel } from '../../common/ListModel';
 
-const router = Router();
+const router =  Router();
 
-const websiteRoutes = (listModel: List) => {
+const websiteRoutes = (listModel: ListModel) => {
     router.get('/', async (req, res) => {
         const listsIDs = await listModel.getAllListsIDs();
-        const lists: any = await Promise.all(listsIDs.map((id: any) => listModel.getList(id)));
+
+        const lists: list[] = await Promise.all(
+            listsIDs.map(async ({ id }) => {
+                const listCrdt = await listModel.getList(id);
+                const l = ListModel.crdtToList(listCrdt.crdt);
+                return { id: id, title: listCrdt.title, items: l.items };
+            })
+        );
 
         res.render('home', { lists: lists, img: 'img/woman.png' });
     });
   
     router.get('/:id', async (req, res) => {
-        const listId = parseInt(req.params.id, 10);
-        const list = await listModel.getList(listId);
+        const listId = req.params.id
+        const listCrdt = await listModel.getList(listId);
+        const l = ListModel.crdtToList(listCrdt.crdt);
 
-        res.render('list', { list: list, img: 'img/woman.png' });
-    });
-  
-    router.get('/:id/edit', async (req, res) => {
-        const listId = parseInt(req.params.id, 10);
-        const list = await listModel.getList(listId);
-        
-        res.render('edit', { list: list, img: '../img/woman.png' });
+        res.render('list', { list: {id: listId, title: listCrdt.title, items: l.items}, img: 'img/woman.png' });
     });
   
     return router;

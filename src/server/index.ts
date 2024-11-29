@@ -1,7 +1,7 @@
 import * as zmq from 'zeromq';
 import { createHash } from 'crypto';
-import { getDatabaseConnection } from './database/init';
-import { ListRepository } from './ListRepository';
+import { getDatabaseConnection } from '../common/database/init';
+import { ListModel } from '../common/ListModel';
 
 if (process.argv.length < 3 || isNaN(parseInt(process.argv[2]))) {
     console.error('Usage: node index.js <port>');
@@ -9,7 +9,7 @@ if (process.argv.length < 3 || isNaN(parseInt(process.argv[2]))) {
 }
 
 const db = getDatabaseConnection(parseInt(process.argv[2]));
-const listRepository = new ListRepository(db);
+const listModel = new ListModel(db, process.argv[2]);
 
 let serverConf
     : { 

@@ -1,4 +1,4 @@
-PRAGMA FOREIGN_KEY = ON;
+PRAGMA FOREIGN_KEYS = ON;
 
 DROP TABLE IF EXISTS Item;
 DROP TABLE IF EXISTS List;
@@ -17,7 +17,7 @@ CREATE TABLE Item(
     context_neg TEXT NOT NULL,
     list_id VARCHAR(36) NOT NULL,
     PRIMARY KEY (name, list_id),
-    FOREIGN KEY (list_id) REFERENCES List(id)
+    FOREIGN KEY (list_id) REFERENCES List(id) ON DELETE CASCADE
 );
 
 INSERT INTO List (id, title, context) VALUES 
