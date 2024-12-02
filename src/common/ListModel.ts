@@ -146,6 +146,32 @@ class ListModel {
             this.saveList(listId, list.title, crdt);
         });
     }
+
+    async incItem(listId: string, itemName: string, itemQuantity: number = 1): Promise<void> {
+        if (itemQuantity <= 0) {
+            return;
+        }
+
+        return this.getList(listId).then((list) => {
+            const crdt = list.crdt;
+            const counter = crdt.getElements().get(itemName)?.crdt as CausalCounter;
+            counter.inc(itemQuantity);
+            this.saveList(listId, list.title, crdt);
+        });
+    }
+
+    async decItem(listId: string, itemName: string, itemQuantity: number = 1): Promise<void> {
+        if (itemQuantity <= 0) {
+            return;
+        }
+
+        return this.getList(listId).then((list) => {
+            const crdt = list.crdt;
+            const counter = crdt.getElements().get(itemName)?.crdt as CausalCounter;
+            counter.dec(itemQuantity);
+            this.saveList(listId, list.title, crdt);
+        });
+    }
     
     static crdtToList(crdt: AWORStructure<AWORVal>): list {
         const items = Array.from(crdt.getElements()).map(([name, val]) => {
