@@ -6,6 +6,7 @@ const router = Router();
 const apiRoutes = (listModel: ListModel) => {
   router.post('/remove', async (req, res) => {
     try {
+      console.log(req.body.listId);
       await listModel.deleteList(req.body.listId);
       res.json(req.body.listId);
       res.status(200).send();
@@ -16,6 +17,8 @@ const apiRoutes = (listModel: ListModel) => {
 
   router.post('/item/remove', async (req, res) => {
     try {
+      console.log(req.body.listId);
+      console.log(req.body.itemName);
       await listModel.deleteItem(req.body.listId, req.body.itemName);
       res.json(req.body.itemName);
       res.status(200).send();

@@ -1,23 +1,28 @@
-<h2>{{{list.title}}}</h2>
+<h2>Edit {{{list.title}}}</h2>
 
-<section id="lists">
+<section id="lists" data-id="{{{list.id}}}">
     <div id="add-btns">
-        <a href="{{{list.id}}}/edit" class="icon edit-btn" title="Edit list"><i class="fa-solid fa-pen fa-lg"></i></a>
+        <button id="add-item-btn" class="icon" title="Add Item"><i class="fa-solid fa-plus fa-lg"></i></button>
     </div>
     <ul>
+        <li id="add-item" class="no-show list-item">
+            <form>
+                <input type="text" name="addItem" placeholder="Insert item name" required autofocus>
+                <button id="add-item-check-btn" class="icon check-btn"><i class="fa-solid fa-check fa-lg"></i></button>
+            </form>
+        </li>
         {{#if list.items}}
             {{#each list.items}}
-                <li class="shopping-list list-item" data-id="{{{this.id}}}">
+                <li class="shopping-item list-item">
                     <p>{{this.name}}</p>
                     <div class="action-btns">
-                        
+                        <button class="icon del-item-btn" title="Delete item"><i class="fa-solid fa-trash fa-lg"></i></button>
                     </div>
                 </li>
             {{/each}}
         {{else}}
-            <li id="no-list" class="list-item">
+            <li id="no-item" class="list-item">
                 <p>You have yet to add any items to this list!</p>
-                <p>Click on the pencil icon to start editing!</p>
             </li>
         {{/if}}
     </ul>

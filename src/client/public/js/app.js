@@ -137,12 +137,16 @@ function confirmItemDelete (event){
 }
 
 function deleteItem(event) {
-  const itemId = event.target.closest('li').getAttribute('data-id');
-  sendAjaxRequest('post', '/api/item/remove', {itemId: itemId}, deleteItemHandler);
+  const listId = event.target.closest('section').getAttribute('data-id');
+  const itemName = event.target.closest('li').querySelector('p').textContent;
+  sendAjaxRequest('post', '/api/item/remove', {listId: listId, itemName: itemName}, deleteItemHandler);
 }
 
 function deleteItemHandler() {
   if (this.status == 200) {
+    console.log(this.responseText);
+    console.log(this.response)
+
     let item = document.querySelector(`li[data-id=${this.responseText}]`);
     item.remove();
     
