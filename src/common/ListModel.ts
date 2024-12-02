@@ -33,7 +33,7 @@ class ListModel {
         this.replicaId = replicaId;
     }
 
-    getAllListsIDs(): Promise<{id:string}[]> {
+    getAllListsIDs(): Promise<string[]> {
         return new Promise((resolve, reject) => {
             const query = 'SELECT id FROM List';
 
@@ -41,7 +41,7 @@ class ListModel {
                 if (err) {
                     return reject(err);
                 }
-                resolve(rows);
+                resolve(rows.map(row => row.id));
             });
         });
     }
@@ -143,6 +143,32 @@ class ListModel {
         return this.getList(listId).then((list) => {
             const crdt = list.crdt;
             crdt.remove(itemName);
+            this.saveList(listId, list.title, crdt);
+        });
+    }
+
+    async incItem(listId: string, itemName: string, itemQuantity: number = 1): Promise<void> {
+        if (itemQuantity <= 0) {
+            return;
+        }
+
+        return this.getList(listId).then((list) => {
+            const crdt = list.crdt;
+            const counter = crdt.getElements().get(itemName)?.crdt as CausalCounter;
+            counter.inc(itemQuantity);
+            this.saveList(listId, list.title, crdt);
+        });
+    }
+
+    async decItem(listId: string, itemName: string, itemQuantity: number = 1): Promise<void> {
+        if (itemQuantity <= 0) {
+            return;
+        }
+
+        return this.getList(listId).then((list) => {
+            const crdt = list.crdt;
+            const counter = crdt.getElements().get(itemName)?.crdt as CausalCounter;
+            counter.dec(itemQuantity);
             this.saveList(listId, list.title, crdt);
         });
     }

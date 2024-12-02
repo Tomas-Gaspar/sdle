@@ -31,7 +31,8 @@ const backend = new zmq.Router();
 
 async function handleFrontend() {
     for await (const [sender, _blank, ...rest] of frontend) {
-        const hash = createHash('sha256').update(rest[0]).digest('hex');
+        // rest = ['put'/'get', 'list_id', (list)?]
+        const hash = createHash('sha256').update(rest[1]).digest('hex');
 
         for (let i = 0; i < hashes.length; i++) {
             if (hash > hashes[i].hash) {

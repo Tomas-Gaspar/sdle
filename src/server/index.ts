@@ -79,12 +79,50 @@ async function handleProxy() {
 
 function processRequest(req: Buffer[]) {
     const client = req[0];
+
+    switch (req[1].toString()) {
+        // [ 'request', 'get', 'list_id' ]
+        case 'get':
+            listModel.getList(req[2].toString()).then(list => {
+                socket.send(['reply', client, JSON.stringify(list)]);
+            }).catch(err => {
+                socket.send(['error', client, err.message]);
+            });
+            break;
+        // [ 'request', 'put', 'list_id', 'list' ]
+        case 'put':
+            listModel.getList(req[2].toString()).then(list => {
+                list.crdt.join(JSON.parse(req[3].toString()));
+                listModel.saveList(req[2].toString(), list.title, list.crdt).then(() => {
+                    const messageList = JSON.stringify(list);
+                    const hash = createHash('sha256').update(req[2]).digest('hex');
+                    pub.send([hash, 'update', req[2], messageList]);
+                    socket.send(['reply', client, messageList]);
+                }).catch(err => {
+                    socket.send(['error', client, err.message]);
+                });
+            }).catch(err => {
+                socket.send(['error', client, err.message]);
+            });
+            break;
+        default:
+            break;
+    }
     
 }
 
 async function handleGossip() {
-    for await (const [...req] of sub) {
-        console.log(req.map(r => r.toString()));
+    for await (const [header, ...req] of sub) {
+        switch (header.toString()) {
+            // [ 'update', 'list_id', 'list' ]
+            case 'update':
+                listModel.getList(req[1].toString()).then(list => {
+                    list.crdt.join(JSON.parse(req[2].toString()));
+                    listModel.saveList(req[1].toString(), list.title, list.crdt);
+                });
+            default:
+                break;
+        }
     }
 }
 
@@ -117,9 +155,6 @@ process.stdin.on('data', (data) => {
     switch (command) {
         case 'exit':
             stop().then(() => process.exit(0));
-            break;
-        case 'send':
-            pub.send(['abc', 'boas']);
             break;
         default:
             console.log(`Unknown command: ${command}`);
