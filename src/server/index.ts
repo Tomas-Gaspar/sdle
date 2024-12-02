@@ -1,10 +1,15 @@
 import * as zmq from 'zeromq';
 import { createHash } from 'crypto';
+import { getDatabaseConnection } from '../common/database/init';
+import { ListModel } from '../common/ListModel';
 
 if (process.argv.length < 3 || isNaN(parseInt(process.argv[2]))) {
     console.error('Usage: node index.js <port>');
     process.exit(1);
 }
+
+const db = getDatabaseConnection(parseInt(process.argv[2]));
+const listModel = new ListModel(db, process.argv[2]);
 
 let serverConf
     : { 
@@ -39,7 +44,8 @@ async function handleProxy() {
                 });
                 hashesPort.sort((a, b) => a.hash < b.hash ? -1 : 1);
 
-                const subscribe = new Set<number>();
+                const portsSubscribe = new Set<number>();
+                const hashesSubscribe = new Set<string>();
                 for (let i = 0; i < hashesPort.length; i++) {
                     if (hashesPort[i].port === parseInt(process.argv[2])) {
                         for (let j = 1; j <= serverConf.num_replicas; j++) {
@@ -47,15 +53,17 @@ async function handleProxy() {
                             if (idx < 0) {
                                 idx = hashesPort.length + idx;
                             }
-                            subscribe.add(hashesPort[idx].port);
+                            portsSubscribe.add(hashesPort[idx].port);
+                            hashesSubscribe.add(hashesPort[idx].hash);
                         }
                     }
                 }
 
-                for (const port of subscribe)
+                for (const port of portsSubscribe)
                     sub.connect(`tcp://127.0.0.1:${port}`);
 
-                sub.subscribe();
+                for (const hash of hashesSubscribe)
+                    sub.subscribe(hash);
 
                 socket.send(['reply', null]);
                 break;

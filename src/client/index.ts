@@ -1,9 +1,9 @@
 import express from 'express';
 import { engine } from 'express-handlebars';
-import { getDatabaseConnection } from './database/init';
-import { List } from './models/List';
+import { getDatabaseConnection } from '../common/database/init';
 import { websiteRoutes } from './routes/Website.routes';
 import { apiRoutes } from './routes/Api.routes';
+import { ListModel } from '../common/ListModel';
 
 const app = express();
 
@@ -14,22 +14,16 @@ app.set('views', './views');
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 
-/* DATABASE */
-const localDb = getDatabaseConnection();
-
-/* MODELS */
-const listModel = new List(localDb);
-
-
-/* ROUTES */
-app.use('/', websiteRoutes(listModel));
-app.use('/api', apiRoutes(listModel));
-
-/* PORT */
-
-const port = process.argv[2] || 3000;
+const port = process.argv[2] || '3000';
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
 
+const db = getDatabaseConnection(parseInt(port));
+const listModel = new ListModel(db, port);
+
+
+/* ROUTES */
+app.use('/', websiteRoutes(listModel));
+app.use('/api', apiRoutes(listModel));

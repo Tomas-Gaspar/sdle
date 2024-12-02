@@ -1,2 +1,4 @@
 node_modules/
+common/database/client/
+common/database/server/
 .DS_Store

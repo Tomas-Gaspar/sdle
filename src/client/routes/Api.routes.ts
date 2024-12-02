@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { List } from '../models/List';
+import { ListModel } from '../../common/ListModel';
 
 const router = Router();
 
-const apiRoutes = (listModel: List) => {
+const apiRoutes = (listModel: ListModel) => {
   router.post('/remove', async (req, res) => {
     try {
       await listModel.deleteList(req.body.listId);
@@ -16,8 +16,8 @@ const apiRoutes = (listModel: List) => {
 
   router.post('/item/remove', async (req, res) => {
     try {
-      await listModel.deleteItem(req.body.itemId);
-      res.json(req.body.itemId);
+      await listModel.deleteItem(req.body.listId, req.body.itemName);
+      res.json(req.body.itemName);
       res.status(200).send();
     } catch (err) {
       res.status(500).send();
@@ -26,9 +26,8 @@ const apiRoutes = (listModel: List) => {
 
   router.post('/create', async (req, res) => {
     try {
-      const listId = await listModel.createList(req.body.listName);
-      const list = await listModel.getList(listId);
-      res.json(list);
+      await listModel.saveList(req.body.listId, req.body.listName);
+      res.json({ id: req.body.listId, title: req.body.listName, items: [] });
       res.status(200).send();
     } catch (err) {
       res.status(500).send();
@@ -37,9 +36,8 @@ const apiRoutes = (listModel: List) => {
 
   router.post('/item/create', async (req, res) => {
     try {
-      const itemId = await listModel.insertItem(req.body.listId, req.body.itemName, req.body.itemQuantity);
-      const item = await listModel.getItem(itemId);
-      res.json(item);
+      await listModel.insertItem(req.body.listId, req.body.itemName, req.body.itemQuantity);
+      res.json({ name: req.body.itemName, quantity: req.body.itemQuantity });
       res.status(200).send();
     } catch (err) {
       res.status(500).send();
