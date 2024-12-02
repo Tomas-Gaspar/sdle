@@ -149,12 +149,15 @@ class ListModel {
     }
     
     static crdtToList(crdt: AWORStructure<AWORVal>): list {
-        const items = Array.from(crdt.getElements()).map(([name, val]) => {
-            return {
+        const items = Array.from(crdt.getElements()).reduce((acc, [name, val]) => {
+            if (!val.dot.tombstone) {
+            acc.push({
                 name: name,
                 quantity: (val.crdt as CausalCounter).value()
-            };
-        });
+            });
+            }
+            return acc;
+        }, [] as item[]);
 
         return {
             id: undefined,

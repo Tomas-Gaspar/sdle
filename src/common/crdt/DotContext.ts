@@ -56,12 +56,12 @@ class DotContext {
     toString(): string {
         return "{" + Array.from(this.dots.entries())
             .map(([id, { version, tombstone }]) => `${id}:${version}${tombstone ? ' (tombstone)' : ''}`)
-            .join(" ") + "}";
+            .join(";") + "}";
     }
 
     static fromString(str: string): DotContext {
         const dotContext = new DotContext();
-        const split = str.slice(1, -1).split(' ');
+        const split = str.slice(1, -1).split(';');
         if (split[0] === '') return dotContext;
 
         for (const entry of split) {
