@@ -213,7 +213,6 @@ function createListHandler() {
   function addItemHandler() {
     if (this.status == 200) {
       const response = JSON.parse(this.response);
-      console.log(response);
   
       let input = document.querySelector('input[name="addItem"]');
       input.value = '';

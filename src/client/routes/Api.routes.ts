@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { ListModel } from '../../common/ListModel';
+import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
 
 const apiRoutes = (listModel: ListModel) => {
   router.post('/remove', async (req, res) => {
     try {
-      console.log(req.body.listId);
       await listModel.deleteList(req.body.listId);
       res.json(req.body.listId);
       res.status(200).send();
@@ -27,8 +27,9 @@ const apiRoutes = (listModel: ListModel) => {
 
   router.post('/create', async (req, res) => {
     try {
-      await listModel.saveList(req.body.listId, req.body.listName);
-      res.json({ id: req.body.listId, title: req.body.listName, items: [] });
+      const listId = uuidv4();
+      await listModel.saveList(listId, req.body.listName);
+      res.json({ id: listId, title: req.body.listName, items: [] });
       res.status(200).send();
     } catch (err) {
       res.status(500).send();
