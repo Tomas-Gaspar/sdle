@@ -17,6 +17,9 @@ function sendAjaxRequest(method, url, data, handler) {
   
 function addEventListeners() {
 
+    let toggleInternetBtn = document.getElementById('internet-btn');
+    if (toggleInternetBtn) toggleInternetBtn.addEventListener('change', (event) => {toggleInternet(event)});
+
     let createListBtn = document.getElementById('create-btn');
     if (createListBtn) createListBtn.addEventListener('click', showCreateList);
 
@@ -46,6 +49,16 @@ function addEventListeners() {
     [].forEach.call(deleteItemBtn, function(btn) {
         btn.addEventListener('click', confirmItemDelete);
     });
+}
+
+function toggleInternet(event) {
+  if (event.target.checked) {
+      console.log("Internet is turned ON");
+      // Add your "checked" logic here
+  } else {
+      console.log("Internet is turned OFF");
+      // Add your "unchecked" logic here
+  }
 }
 
 function showCreateList() {
