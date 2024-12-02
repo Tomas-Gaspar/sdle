@@ -33,7 +33,7 @@ class ListModel {
         this.replicaId = replicaId;
     }
 
-    getAllListsIDs(): Promise<{id:string}[]> {
+    getAllListsIDs(): Promise<string[]> {
         return new Promise((resolve, reject) => {
             const query = 'SELECT id FROM List';
 
@@ -41,7 +41,7 @@ class ListModel {
                 if (err) {
                     return reject(err);
                 }
-                resolve(rows);
+                resolve(rows.map(row => row.id));
             });
         });
     }

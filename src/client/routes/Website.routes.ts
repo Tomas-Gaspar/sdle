@@ -8,7 +8,7 @@ const websiteRoutes = (listModel: ListModel) => {
         const listsIDs = await listModel.getAllListsIDs();
 
         const lists: list[] = await Promise.all(
-            listsIDs.map(async ({ id }) => {
+            listsIDs.map(async (id) => {
                 const listCrdt = await listModel.getList(id);
                 const l = ListModel.crdtToList(listCrdt.crdt);
                 return { id: id, title: listCrdt.title, items: l.items };
