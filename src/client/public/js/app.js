@@ -270,22 +270,11 @@ function createListHandler() {
   
   function increaseItemQuantityHadler() {
     if (this.status == 200) {
-      console.log(this.response);
-      /* let item = document.querySelector(`li[data-id=${this.responseText}]`);
-      item.remove();
-      
-      let listContainer = document.querySelector('#lists ul');
-      let otherLists = listContainer.querySelectorAll('li.shopping-item');
-      if (otherLists.length === 0) {
-        let newListItem = document.createElement('li');
-        newListItem.id = 'no-item';
-        newListItem.className = 'list-item';
-        newListItem.innerHTML = `
-          <p>You have yet to add any items to this list!</p>
-        `;
-  
-        listContainer.appendChild(newListItem);
-      } */
+      const response = JSON.parse(this.response);
+
+      let item = document.querySelector(`li[data-id=${response.name}]`);
+      const quantity = item.querySelector('.quantity p');
+      quantity.textContent = response.quantity;
     }
     else {
       console.error("Error while increasing item quantity");

@@ -147,9 +147,9 @@ class ListModel {
         });
     }
 
-    async incItem(listId: string, itemName: string, itemQuantity: number = 1): Promise<void> {
+    async incItem(listId: string, itemName: string, itemQuantity: number = 1): Promise<number> {
         if (itemQuantity <= 0) {
-            return;
+            return -1;
         }
 
         return this.getList(listId).then((list) => {
@@ -157,6 +157,7 @@ class ListModel {
             const counter = crdt.getElements().get(itemName)?.crdt as CausalCounter;
             counter.inc(itemQuantity);
             this.saveList(listId, list.title, crdt);
+            return counter.value();
         });
     }
 
