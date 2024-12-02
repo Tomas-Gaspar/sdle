@@ -46,6 +46,11 @@ function addEventListeners() {
     [].forEach.call(deleteItemBtn, function(btn) {
         btn.addEventListener('click', confirmItemDelete);
     });
+
+    let increaseQuantityItemBtn = document.querySelectorAll('.inc-quant-btn');
+    [].forEach.call(increaseQuantityItemBtn, function(btn) {
+        btn.addEventListener('click', increaseItemQuantity);
+    });
 }
 
 function showCreateList() {
@@ -118,6 +123,9 @@ function deleteListHandler() {
       listContainer.appendChild(newListItem);
     }
   }
+  else {
+    console.error("Error while deleting list");
+  }
 }
 
 function confirmItemDelete (event){
@@ -160,6 +168,9 @@ function deleteItemHandler() {
       listContainer.appendChild(newListItem);
     }
   }
+  else {
+    console.error("Error while deleting item");
+  }
 }
 
 function createList(event) {
@@ -189,7 +200,6 @@ function createListHandler() {
       <p>${response.title}</p>
       <div class="action-btns">
           <a href="${response.id}" class="icon view-btn" title="View list"><i class="fa-solid fa-eye fa-lg"></i></a>
-          <a href="${response.id}/edit" class="icon edit-btn" title="Edit list"><i class="fa-solid fa-pen fa-lg"></i></a>
           <button class="icon copy-btn" title="Copy list id"><i class="fa-solid fa-copy fa-lg"></i></button>
           <button class="icon del-btn" title="Delete list"><i class="fa-solid fa-trash fa-lg"></i></button>
       </div>
@@ -200,6 +210,9 @@ function createListHandler() {
 
     addEventListeners();
   }
+  else {
+    console.error("Error while creating list");
+  }
 }
 
   function addItem(event) {
@@ -207,7 +220,7 @@ function createListHandler() {
     const listId = event.target.closest('section').getAttribute('data-id');
     const itemName = document.querySelector('input[name="addItem"]').value;
     if (itemName !== '')
-      sendAjaxRequest('post', '/api/item/create', {listId: listId, itemName: itemName, itemQuantity: 5}, addItemHandler);
+      sendAjaxRequest('post', '/api/item/create', {listId: listId, itemName: itemName, itemQuantity: 1}, addItemHandler);
   }
   
   function addItemHandler() {
@@ -229,6 +242,11 @@ function createListHandler() {
       newListItem.innerHTML = `
         <p>${response.name}</p>
         <div class="action-btns">
+            <div class="quantity">
+              <button class="icon inc-quant-btn" title="Increase quantity"><i class="fa-solid fa-plus fa-lg"></i></button>
+              <p>${response.quantity}</p>
+              <button class="icon dec-quant-btn" title="Decrease quantity"><i class="fa-solid fa-minus fa-lg"></i></button>
+            </div>
             <button class="icon del-item-btn" title="Delete item"><i class="fa-solid fa-trash fa-lg"></i></button>
         </div>
       `;
@@ -237,6 +255,40 @@ function createListHandler() {
       ulElement.appendChild(newListItem);
   
       addEventListeners();
+    }
+    else{
+      console.error("Error while adding item to list");
+    }
+  }
+
+  function increaseItemQuantity(event) {
+    const listId = event.target.closest('section').getAttribute('data-id');
+    const itemName = event.target.closest('li').querySelector('p').textContent;
+    const quantity = event.target.closest('div').querySelector('p').textContent;
+    sendAjaxRequest('post', '/api/item/increase', {listId: listId, itemName: itemName, itemQuantity: quantity}, increaseItemQuantityHadler);
+  }
+  
+  function increaseItemQuantityHadler() {
+    if (this.status == 200) {
+      console.log(this.response);
+      /* let item = document.querySelector(`li[data-id=${this.responseText}]`);
+      item.remove();
+      
+      let listContainer = document.querySelector('#lists ul');
+      let otherLists = listContainer.querySelectorAll('li.shopping-item');
+      if (otherLists.length === 0) {
+        let newListItem = document.createElement('li');
+        newListItem.id = 'no-item';
+        newListItem.className = 'list-item';
+        newListItem.innerHTML = `
+          <p>You have yet to add any items to this list!</p>
+        `;
+  
+        listContainer.appendChild(newListItem);
+      } */
+    }
+    else {
+      console.error("Error while increasing item quantity");
     }
   }
 

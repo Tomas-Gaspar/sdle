@@ -140,7 +140,6 @@ class ListModel {
     }
 
     async deleteItem(listId: string, itemName: string): Promise<void> {
-        console.log('Deleting item ', itemName, ' from list ', listId);
         return this.getList(listId).then((list) => {
             const crdt = list.crdt;
             crdt.remove(itemName);

@@ -46,6 +46,16 @@ const apiRoutes = (listModel: ListModel) => {
     }
   });
 
+  router.post('/item/increase', async (req, res) => {
+    try {
+      /* await listModel.insertItem(req.body.listId, req.body.itemName, req.body.itemQuantity);
+      res.json({ name: req.body.itemName, quantity: req.body.itemQuantity }); */
+      res.status(200).send();
+    } catch (err) {
+      res.status(500).send();
+    }
+  });
+
   return router;
 };
 

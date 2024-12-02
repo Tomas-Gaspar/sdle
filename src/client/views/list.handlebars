@@ -16,6 +16,11 @@
                 <li class="shopping-item list-item" data-id="{{this.name}}">
                     <p>{{this.name}}</p>
                     <div class="action-btns">
+                        <div class="quantity">
+                            <button class="icon inc-quant-btn" title="Increase quantity"><i class="fa-solid fa-plus fa-lg"></i></button>
+                            <p>{{this.quantity}}</p>
+                            <button class="icon dec-quant-btn" title="Decrease quantity"><i class="fa-solid fa-minus fa-lg"></i></button>
+                        </div>
                         <button class="icon del-item-btn" title="Delete item"><i class="fa-solid fa-trash fa-lg"></i></button>
                     </div>
                 </li>
