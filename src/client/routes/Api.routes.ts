@@ -17,8 +17,6 @@ const apiRoutes = (listModel: ListModel) => {
 
   router.post('/item/remove', async (req, res) => {
     try {
-      console.log(req.body.listId);
-      console.log(req.body.itemName);
       await listModel.deleteItem(req.body.listId, req.body.itemName);
       res.json(req.body.itemName);
       res.status(200).send();

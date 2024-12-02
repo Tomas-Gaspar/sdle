@@ -144,9 +144,6 @@ function deleteItem(event) {
 
 function deleteItemHandler() {
   if (this.status == 200) {
-    console.log(this.responseText);
-    console.log(this.response)
-
     let item = document.querySelector(`li[data-id=${this.responseText}]`);
     item.remove();
     
@@ -228,7 +225,7 @@ function createListHandler() {
   
       let newListItem = document.createElement('li');
       newListItem.className = 'shopping-item list-item';
-      newListItem.setAttribute('data-id', response.id);
+      newListItem.setAttribute('data-id', response.name);
   
       newListItem.innerHTML = `
         <p>${response.name}</p>

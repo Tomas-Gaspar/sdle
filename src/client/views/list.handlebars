@@ -1,4 +1,4 @@
-<h2>Edit {{{list.title}}}</h2>
+<h2>{{{list.title}}}</h2>
 
 <section id="lists" data-id="{{{list.id}}}">
     <div id="add-btns">
@@ -13,7 +13,7 @@
         </li>
         {{#if list.items}}
             {{#each list.items}}
-                <li class="shopping-item list-item">
+                <li class="shopping-item list-item" data-id="{{this.name}}">
                     <p>{{this.name}}</p>
                     <div class="action-btns">
                         <button class="icon del-item-btn" title="Delete item"><i class="fa-solid fa-trash fa-lg"></i></button>
