@@ -57,6 +57,17 @@ const apiRoutes = (listModel: ListModel) => {
     }
   });
 
+  router.post('/item/decrease', async (req, res) => {
+    try {
+      const newQuantity = await listModel.decItem(req.body.listId, req.body.itemName, 1);
+      if (newQuantity < 0) throw new Error("Invalid quantity");
+      res.json({ name: req.body.itemName, quantity: newQuantity });
+      res.status(200).send();
+    } catch (err) {
+      res.status(500).send();
+    }
+  });
+
   return router;
 };
 

@@ -51,6 +51,20 @@ function addEventListeners() {
     [].forEach.call(increaseQuantityItemBtn, function(btn) {
         btn.addEventListener('click', increaseItemQuantity);
     });
+
+    let decreaseQuantityItemBtn = document.querySelectorAll('.dec-quant-btn');
+    [].forEach.call(decreaseQuantityItemBtn, function(btn) {
+        btn.addEventListener('click', decreaseItemQuantity);
+    });
+
+    let item = document.querySelectorAll('.shopping-item.list-item');
+    [].forEach.call(item, function(i) {
+        let quantity = i.querySelector('.quantity p').textContent;
+        if (quantity === '0'){
+          i.style.backgroundColor = '#F5F5F5';
+          i.querySelector('p').style.textDecoration = 'line-through';
+        }
+    });
 }
 
 function showCreateList() {
@@ -275,6 +289,36 @@ function createListHandler() {
       let item = document.querySelector(`li[data-id=${response.name}]`);
       const quantity = item.querySelector('.quantity p');
       quantity.textContent = response.quantity;
+
+      if (response.quantity > 0){
+        item.style.backgroundColor = '#FFFFFF';
+        item.querySelector('p').style.textDecoration = 'none';
+      }
+    }
+    else {
+      console.error("Error while increasing item quantity");
+    }
+  }
+
+  function decreaseItemQuantity(event) {
+    const listId = event.target.closest('section').getAttribute('data-id');
+    const itemName = event.target.closest('li').querySelector('p').textContent;
+    const quantity = event.target.closest('div').querySelector('p').textContent;
+    if (quantity > 0) sendAjaxRequest('post', '/api/item/decrease', {listId: listId, itemName: itemName, itemQuantity: quantity}, decreaseItemQuantityHadler);
+  }
+  
+  function decreaseItemQuantityHadler() {
+    if (this.status == 200) {
+      const response = JSON.parse(this.response);
+
+      let item = document.querySelector(`li[data-id=${response.name}]`);
+      const quantity = item.querySelector('.quantity p');
+      quantity.textContent = response.quantity;
+
+      if (response.quantity === 0){
+        item.style.backgroundColor = '#F5F5F5';
+        item.querySelector('p').style.textDecoration = 'line-through';
+      }
     }
     else {
       console.error("Error while increasing item quantity");
