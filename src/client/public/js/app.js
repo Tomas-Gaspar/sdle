@@ -46,6 +46,25 @@ function addEventListeners() {
     [].forEach.call(deleteItemBtn, function(btn) {
         btn.addEventListener('click', confirmItemDelete);
     });
+
+    let increaseQuantityItemBtn = document.querySelectorAll('.inc-quant-btn');
+    [].forEach.call(increaseQuantityItemBtn, function(btn) {
+        btn.addEventListener('click', increaseItemQuantity);
+    });
+
+    let decreaseQuantityItemBtn = document.querySelectorAll('.dec-quant-btn');
+    [].forEach.call(decreaseQuantityItemBtn, function(btn) {
+        btn.addEventListener('click', decreaseItemQuantity);
+    });
+
+    let item = document.querySelectorAll('.shopping-item.list-item');
+    [].forEach.call(item, function(i) {
+        let quantity = i.querySelector('.quantity p').textContent;
+        if (quantity === '0'){
+          i.style.backgroundColor = '#F5F5F5';
+          i.querySelector('p').style.textDecoration = 'line-through';
+        }
+    });
 }
 
 function showCreateList() {
@@ -118,6 +137,9 @@ function deleteListHandler() {
       listContainer.appendChild(newListItem);
     }
   }
+  else {
+    console.error("Error while deleting list");
+  }
 }
 
 function confirmItemDelete (event){
@@ -137,8 +159,9 @@ function confirmItemDelete (event){
 }
 
 function deleteItem(event) {
-  const itemId = event.target.closest('li').getAttribute('data-id');
-  sendAjaxRequest('post', '/api/item/remove', {itemId: itemId}, deleteItemHandler);
+  const listId = event.target.closest('section').getAttribute('data-id');
+  const itemName = event.target.closest('li').querySelector('p').textContent;
+  sendAjaxRequest('post', '/api/item/remove', {listId: listId, itemName: itemName}, deleteItemHandler);
 }
 
 function deleteItemHandler() {
@@ -158,6 +181,9 @@ function deleteItemHandler() {
 
       listContainer.appendChild(newListItem);
     }
+  }
+  else {
+    console.error("Error while deleting item");
   }
 }
 
@@ -188,7 +214,6 @@ function createListHandler() {
       <p>${response.title}</p>
       <div class="action-btns">
           <a href="${response.id}" class="icon view-btn" title="View list"><i class="fa-solid fa-eye fa-lg"></i></a>
-          <a href="${response.id}/edit" class="icon edit-btn" title="Edit list"><i class="fa-solid fa-pen fa-lg"></i></a>
           <button class="icon copy-btn" title="Copy list id"><i class="fa-solid fa-copy fa-lg"></i></button>
           <button class="icon del-btn" title="Delete list"><i class="fa-solid fa-trash fa-lg"></i></button>
       </div>
@@ -199,6 +224,9 @@ function createListHandler() {
 
     addEventListeners();
   }
+  else {
+    console.error("Error while creating list");
+  }
 }
 
   function addItem(event) {
@@ -206,13 +234,12 @@ function createListHandler() {
     const listId = event.target.closest('section').getAttribute('data-id');
     const itemName = document.querySelector('input[name="addItem"]').value;
     if (itemName !== '')
-      sendAjaxRequest('post', '/api/item/create', {listId: listId, itemName: itemName, itemQuantity: 5}, addItemHandler);
+      sendAjaxRequest('post', '/api/item/create', {listId: listId, itemName: itemName, itemQuantity: 1}, addItemHandler);
   }
   
   function addItemHandler() {
     if (this.status == 200) {
       const response = JSON.parse(this.response);
-      console.log(response);
   
       let input = document.querySelector('input[name="addItem"]');
       input.value = '';
@@ -224,11 +251,16 @@ function createListHandler() {
   
       let newListItem = document.createElement('li');
       newListItem.className = 'shopping-item list-item';
-      newListItem.setAttribute('data-id', response.id);
+      newListItem.setAttribute('data-id', response.name);
   
       newListItem.innerHTML = `
         <p>${response.name}</p>
         <div class="action-btns">
+            <div class="quantity">
+              <button class="icon inc-quant-btn" title="Increase quantity"><i class="fa-solid fa-plus fa-lg"></i></button>
+              <p>${response.quantity}</p>
+              <button class="icon dec-quant-btn" title="Decrease quantity"><i class="fa-solid fa-minus fa-lg"></i></button>
+            </div>
             <button class="icon del-item-btn" title="Delete item"><i class="fa-solid fa-trash fa-lg"></i></button>
         </div>
       `;
@@ -237,6 +269,59 @@ function createListHandler() {
       ulElement.appendChild(newListItem);
   
       addEventListeners();
+    }
+    else{
+      console.error("Error while adding item to list");
+    }
+  }
+
+  function increaseItemQuantity(event) {
+    const listId = event.target.closest('section').getAttribute('data-id');
+    const itemName = event.target.closest('li').querySelector('p').textContent;
+    const quantity = event.target.closest('div').querySelector('p').textContent;
+    sendAjaxRequest('post', '/api/item/increase', {listId: listId, itemName: itemName, itemQuantity: quantity}, increaseItemQuantityHadler);
+  }
+  
+  function increaseItemQuantityHadler() {
+    if (this.status == 200) {
+      const response = JSON.parse(this.response);
+
+      let item = document.querySelector(`li[data-id=${response.name}]`);
+      const quantity = item.querySelector('.quantity p');
+      quantity.textContent = response.quantity;
+
+      if (response.quantity > 0){
+        item.style.backgroundColor = '#FFFFFF';
+        item.querySelector('p').style.textDecoration = 'none';
+      }
+    }
+    else {
+      console.error("Error while increasing item quantity");
+    }
+  }
+
+  function decreaseItemQuantity(event) {
+    const listId = event.target.closest('section').getAttribute('data-id');
+    const itemName = event.target.closest('li').querySelector('p').textContent;
+    const quantity = event.target.closest('div').querySelector('p').textContent;
+    if (quantity > 0) sendAjaxRequest('post', '/api/item/decrease', {listId: listId, itemName: itemName, itemQuantity: quantity}, decreaseItemQuantityHadler);
+  }
+  
+  function decreaseItemQuantityHadler() {
+    if (this.status == 200) {
+      const response = JSON.parse(this.response);
+
+      let item = document.querySelector(`li[data-id=${response.name}]`);
+      const quantity = item.querySelector('.quantity p');
+      quantity.textContent = response.quantity;
+
+      if (response.quantity === 0){
+        item.style.backgroundColor = '#F5F5F5';
+        item.querySelector('p').style.textDecoration = 'line-through';
+      }
+    }
+    else {
+      console.error("Error while increasing item quantity");
     }
   }
 

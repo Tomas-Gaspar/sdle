@@ -48,7 +48,7 @@ class ListModel {
 
     getList(id: string): Promise<{title: string, crdt: AWORStructure<AWORVal>}> {
         return new Promise((resolve, reject) => {
-            const query = 'SELECT * FROM Item JOIN List WHERE List.id = ?;'
+            const query = 'SELECT * FROM List LEFT JOIN Item ON List.id = Item.list_id WHERE List.id = ?;'
             const params: [string] = [id];
 
             this.db.all(query, params, (err, rows: list_item[]) => {
@@ -57,6 +57,8 @@ class ListModel {
                 }
                 const elements = new Map<string, AWORVal>();
                 for (const row of rows) {
+                    if (!row.name) continue;
+
                     elements.set(row.name, {
                         dot: Dot.fromString(row.dot),
                         // Must set the ID before performing any increment or decrement
@@ -64,7 +66,13 @@ class ListModel {
                     });    
                 }
 
-                const AWORMap = new AWORStructure(this.replicaId, DotContext.fromString(rows[0].context), elements);
+                let AWORMap;
+                if (elements.size === 0) {
+                    AWORMap = new AWORStructure(this.replicaId);
+                }
+                else {
+                    AWORMap = new AWORStructure(this.replicaId, DotContext.fromString(rows[0].context), elements);
+                }
                 resolve({title: rows[0].title, crdt: AWORMap});
             });
         });
@@ -147,9 +155,9 @@ class ListModel {
         });
     }
 
-    async incItem(listId: string, itemName: string, itemQuantity: number = 1): Promise<void> {
+    async incItem(listId: string, itemName: string, itemQuantity: number = 1): Promise<number> {
         if (itemQuantity <= 0) {
-            return;
+            return -1;
         }
 
         return this.getList(listId).then((list) => {
@@ -157,12 +165,13 @@ class ListModel {
             const counter = crdt.getElements().get(itemName)?.crdt as CausalCounter;
             counter.inc(itemQuantity);
             this.saveList(listId, list.title, crdt);
+            return counter.value();
         });
     }
 
-    async decItem(listId: string, itemName: string, itemQuantity: number = 1): Promise<void> {
+    async decItem(listId: string, itemName: string, itemQuantity: number = 1): Promise<number> {
         if (itemQuantity <= 0) {
-            return;
+            return -1;
         }
 
         return this.getList(listId).then((list) => {
@@ -170,16 +179,20 @@ class ListModel {
             const counter = crdt.getElements().get(itemName)?.crdt as CausalCounter;
             counter.dec(itemQuantity);
             this.saveList(listId, list.title, crdt);
+            return counter.value();
         });
     }
     
     static crdtToList(crdt: AWORStructure<AWORVal>): list {
-        const items = Array.from(crdt.getElements()).map(([name, val]) => {
-            return {
+        const items = Array.from(crdt.getElements()).reduce((acc, [name, val]) => {
+            if (!val.dot.tombstone) {
+            acc.push({
                 name: name,
                 quantity: (val.crdt as CausalCounter).value()
-            };
-        });
+            });
+            }
+            return acc;
+        }, [] as item[]);
 
         return {
             id: undefined,

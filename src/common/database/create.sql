@@ -26,4 +26,4 @@ INSERT INTO List (id, title, context) VALUES
 INSERT INTO Item (dot, name, context_pos, context_neg, list_id) VALUES 
 ('A:1', 'Milk', '{A:1}', '{}', '123e4567-e89b-12d3-a456-426614174000'),
 ('B:2', 'Bread', '{A:2}', '{A:1}', '123e4567-e89b-12d3-a456-426614174000'),
-('A:2', 'Eggs', '{B:1}', '{A:2}', '123e4567-e89b-12d3-a456-426614174000');
+('A:2', 'Eggs', '{B:3}', '{A:2}', '123e4567-e89b-12d3-a456-426614174000');

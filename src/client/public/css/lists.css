@@ -62,3 +62,34 @@
 #create-list.no-show, #download-list.no-show, #add-item.no-show {
     display: none;
 }
+
+li.shopping-item div.action-btns {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 1em;
+}
+
+li.shopping-item div.quantity {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 1em;
+    width: 30%;
+}
+
+li.shopping-item div.quantity button{
+    text-align: center;
+}
+
+@media (max-width: 60em) {
+    #lists > img {
+        display: none;
+    }
+
+    #lists > ul {
+        grid-area: 2 / 1 / span 1 / span 2;
+    }
+
+}

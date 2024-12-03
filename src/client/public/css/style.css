@@ -57,15 +57,10 @@ body {
     font-family: "Verdana", sans-serif;
 }
 
-header a i{
-    color: var(--orange);
-    margin: .5em;
-    font-size: 2em;
-    transition: .3s;
-}
-
-header a i:hover{
-    color: var(--dark-green);
+header a img{
+    margin-top: .5em;
+    margin-left: .5em;
+    max-width: 2.5em;
 }
 
 main h1{
@@ -80,31 +75,4 @@ h2 {
     font-size: 4em;
     color: var(--dark-green);
     text-align: center;
-}
-
-/* Home Buttons */
-#home-btns {
-    display: flex;
-    justify-content: center;
-    gap: 2em;
-}
-
-#home-btns a {
-    padding: 1em 2em;
-    border-radius: 5px;
-}
-
-#home-btns #login-btn {
-    background-color: var(--dark-green);
-    color: var(--white);
-}
-
-#home-btns #register-btn {
-    background-color: var(--white);
-    color: var(--dark);
-}
-
-#home-btns #login-btn:hover, #home-btns #register-btn:hover {
-    background-color: var(--orange);
-    color: var(--white);
 }
