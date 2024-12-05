@@ -53,12 +53,24 @@ function addEventListeners() {
 
 function toggleInternet(event) {
   if (event.target.checked) {
-      console.log("Internet is turned ON");
-      // Add your "checked" logic here
+    sendAjaxRequest('post', '/api/internet', {internet: true}, turnInternetOnHandler);
   } else {
-      console.log("Internet is turned OFF");
-      // Add your "unchecked" logic here
+    sendAjaxRequest('post', '/api/internet', {internet: false}, turnInternetOffHandler);
   }
+}
+
+function turnInternetOnHandler() {
+  internetBtn = document.getElementById('internet-btn');
+  internetInput = internetBtn.querySelector('input');
+  internetInput.setAttribute('data-id', true);
+  console.log("Internet is turned ON");
+}
+
+function turnInternetOffHandler() {
+  internetBtn = document.getElementById('internet-btn');
+  internetInput = internetBtn.querySelector('input');
+  internetInput.setAttribute('data-id', false);
+  console.log("Internet is turned OFF");
 }
 
 function showCreateList() {

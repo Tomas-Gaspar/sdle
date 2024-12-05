@@ -3,7 +3,13 @@ import { list, ListModel } from '../../common/ListModel';
 
 const router =  Router();
 
-const websiteRoutes = (listModel: ListModel) => {
+type state = {
+    "internet": boolean,
+    "needsToSendAll": boolean,
+    "page": string
+}
+
+const websiteRoutes = (listModel: ListModel, currState: state) => {
     router.get('/', async (req, res) => {
         const listsIDs = await listModel.getAllListsIDs();
 
@@ -15,7 +21,8 @@ const websiteRoutes = (listModel: ListModel) => {
             })
         );
 
-        res.render('home', { lists: lists, img: 'img/woman.png' });
+        res.render('home', { internet: currState.internet, lists: lists, img: 'img/woman.png' });
+        currState.page = "/";
     });
   
     router.get('/:id', async (req, res) => {
@@ -23,7 +30,8 @@ const websiteRoutes = (listModel: ListModel) => {
         const listCrdt = await listModel.getList(listId);
         const l = ListModel.crdtToList(listCrdt.crdt);
 
-        res.render('list', { list: {id: listId, title: listCrdt.title, items: l.items}, img: 'img/woman.png' });
+        res.render('list', { internet: currState.internet, list: {id: listId, title: listCrdt.title, items: l.items}, img: 'img/woman.png' });
+        currState.page = listId;
     });
   
     return router;

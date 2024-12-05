@@ -3,10 +3,16 @@ import { ListModel } from '../../common/ListModel';
 
 const router = Router();
 
-const apiRoutes = (listModel: ListModel) => {
+type state = {
+  "internet": boolean,
+  "needsToSendAll": boolean,
+  "page": string
+}
+
+const apiRoutes = (listModel: ListModel, currState: state) => {
   router.post('/remove', async (req, res) => {
     try {
-      console.log(req.body.listId);
+      //console.log(req.body.listId);
       await listModel.deleteList(req.body.listId);
       res.json(req.body.listId);
       res.status(200).send();
@@ -41,6 +47,22 @@ const apiRoutes = (listModel: ListModel) => {
     try {
       await listModel.insertItem(req.body.listId, req.body.itemName, req.body.itemQuantity);
       res.json({ name: req.body.itemName, quantity: req.body.itemQuantity });
+      res.status(200).send();
+    } catch (err) {
+      res.status(500).send();
+    }
+  });
+
+  router.post('/internet', async (req, res) => {
+    try {
+      const internetStatus = Boolean(req.body["internet"]);
+      if (internetStatus) {
+        currState.internet = true;
+        // TODO: Send a message to the worker to fetch the data
+      } else {
+        currState.internet = false;
+      }
+      res.json({ internet: currState.internet });
       res.status(200).send();
     } catch (err) {
       res.status(500).send();
