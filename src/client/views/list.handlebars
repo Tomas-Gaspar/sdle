@@ -2,7 +2,7 @@
 
 <section id="lists" data-id="{{{list.id}}}">
     <div id="add-btns">
-        <button id="add-item-btn" class="icon" title="Add Item"><i class="fa-solid fa-plus fa-lg"></i></button>
+        <button id="add-item-btn" class="icon" title="Add Item">{{includeSvg "public/img/plus.svg"}}</button>
     </div>
     <ul>
         <li id="add-item" class="no-show list-item">
@@ -17,7 +17,7 @@
                     <p>{{this.name}}</p>
                     <div class="action-btns">
                         <div class="quantity">
-                            <button class="icon inc-quant-btn" title="Increase quantity"><i class="fa-solid fa-plus fa-lg"></i></button>
+                            <button class="icon inc-quant-btn" title="Increase quantity">{{includeSvg "public/img/plus.svg"}}</button>
                             <p>{{this.quantity}}</p>
                             <button class="icon dec-quant-btn" title="Decrease quantity"><i class="fa-solid fa-minus fa-lg"></i></button>
                         </div>

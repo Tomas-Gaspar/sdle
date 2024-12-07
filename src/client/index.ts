@@ -23,6 +23,17 @@ app.listen(port, () => {
 const db = getDatabaseConnection(parseInt(port));
 const listModel = new ListModel(db, port);
 
+var fs = require('fs');
+import Handlebars from 'handlebars';
+
+Handlebars.registerHelper('includeSvg', function (filePath: string) {
+    try {
+      return new Handlebars.SafeString(fs.readFileSync(filePath, 'utf8'));
+    } catch (err) {
+      return 'X';
+    }
+});
+
 
 /* ROUTES */
 app.use('/', websiteRoutes(listModel));
