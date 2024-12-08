@@ -4,6 +4,8 @@ import { getDatabaseConnection } from '../common/database/init';
 import { websiteRoutes } from './routes/Website.routes';
 import { apiRoutes } from './routes/Api.routes';
 import { ListModel } from '../common/ListModel';
+import Handlebars from 'handlebars';
+import fs from 'fs';
 
 const app = express();
 
@@ -23,9 +25,6 @@ app.listen(port, () => {
 const db = getDatabaseConnection(parseInt(port));
 const listModel = new ListModel(db, port);
 
-var fs = require('fs');
-import Handlebars from 'handlebars';
-
 Handlebars.registerHelper('includeSvg', function (filePath: string) {
     try {
       return new Handlebars.SafeString(fs.readFileSync(filePath, 'utf8'));
@@ -33,7 +32,6 @@ Handlebars.registerHelper('includeSvg', function (filePath: string) {
       return 'X';
     }
 });
-
 
 /* ROUTES */
 app.use('/', websiteRoutes(listModel));

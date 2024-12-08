@@ -52,8 +52,9 @@ button {
 svg {
     color: var(--dark-green);
     transition: .3s;
-    width: 1em;
-    height: 1em;
+    width: 1.3em;
+    height: 1.3em;
+    padding: 0 .5em;
 }
 
 svg:hover {
