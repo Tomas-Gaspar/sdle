@@ -14,6 +14,11 @@ function sendAjaxRequest(method, url, data, handler) {
   request.addEventListener('load', handler);
   request.send(encodeForAjax(data));
 }
+
+async function getSvg(url) {
+  const response = await fetch(url);
+  return response.text();
+}
   
 function addEventListeners() {
 
@@ -194,7 +199,7 @@ function createList(event) {
     sendAjaxRequest('post', '/api/create', {listName: listName}, createListHandler);
 }
 
-function createListHandler() {
+async function createListHandler() {
   if (this.status == 200) {
     const response = JSON.parse(this.response);
 
@@ -210,12 +215,16 @@ function createListHandler() {
     newListItem.className = 'shopping-list list-item';
     newListItem.setAttribute('data-id', response.id);
 
+    const eyeSvg = await getSvg('../img/eye.svg');
+    const copySvg = await getSvg('../img/copy.svg');
+    const trashSvg = await getSvg('../img/trash.svg');
+
     newListItem.innerHTML = `
       <p>${response.title}</p>
       <div class="action-btns">
-          <a href="${response.id}" class="icon view-btn" title="View list"><i class="fa-solid fa-eye fa-lg"></i></a>
-          <button class="icon copy-btn" title="Copy list id"><i class="fa-solid fa-copy fa-lg"></i></button>
-          <button class="icon del-btn" title="Delete list"><i class="fa-solid fa-trash fa-lg"></i></button>
+          <a href="${response.id}" class="icon view-btn" title="View list">${eyeSvg}</a>
+          <button class="icon copy-btn" title="Copy list id">${copySvg}</button>
+          <button class="icon del-btn" title="Delete list">${trashSvg}</button>
       </div>
     `;
 
@@ -237,7 +246,7 @@ function createListHandler() {
       sendAjaxRequest('post', '/api/item/create', {listId: listId, itemName: itemName, itemQuantity: 1}, addItemHandler);
   }
   
-  function addItemHandler() {
+  async function addItemHandler() {
     if (this.status == 200) {
       const response = JSON.parse(this.response);
   
@@ -252,16 +261,20 @@ function createListHandler() {
       let newListItem = document.createElement('li');
       newListItem.className = 'shopping-item list-item';
       newListItem.setAttribute('data-id', response.name);
+
+      const plusSvg = await getSvg('../img/plus.svg');
+      const minusSvg = await getSvg('../img/minus.svg');
+      const trashSvg = await getSvg('../img/trash.svg');
   
       newListItem.innerHTML = `
         <p>${response.name}</p>
         <div class="action-btns">
             <div class="quantity">
-              <button class="icon inc-quant-btn" title="Increase quantity"><i class="fa-solid fa-plus fa-lg"></i></button>
+              <button class="icon inc-quant-btn" title="Increase quantity">${plusSvg}</button>
               <p>${response.quantity}</p>
-              <button class="icon dec-quant-btn" title="Decrease quantity"><i class="fa-solid fa-minus fa-lg"></i></button>
+              <button class="icon dec-quant-btn" title="Decrease quantity">${minusSvg}</button>
             </div>
-            <button class="icon del-item-btn" title="Delete item"><i class="fa-solid fa-trash fa-lg"></i></button>
+            <button class="icon del-item-btn" title="Delete item">${trashSvg}</button>
         </div>
       `;
   
