@@ -13,6 +13,12 @@
     <main>
         <header>
             <a href="/"><img src="/img/carrot.png" alt=""></a>
+            <div id="internet-btn" title="Toggle internet">
+                <label class="switch">
+                    <input type="checkbox" data-id={{{internet}}} {{#if internet}}checked{{/if}}>
+                    <span class="slider round"></span>
+                </label>
+            </div>
         </header>
         <article id="contents">
             {{{body}}}

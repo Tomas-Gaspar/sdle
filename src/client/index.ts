@@ -1,8 +1,7 @@
 import express from 'express';
 import { engine } from 'express-handlebars';
 import { getDatabaseConnection } from '../common/database/init';
-import { websiteRoutes } from './routes/Website.routes';
-import { apiRoutes } from './routes/Api.routes';
+import { apiRoutes, websiteRoutes } from './routes/routes';
 import { ListModel } from '../common/ListModel';
 import Handlebars from 'handlebars';
 import fs from 'fs';
