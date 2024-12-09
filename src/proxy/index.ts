@@ -102,7 +102,7 @@ async function handleBackend() {
                 console.error(`unknown header: ${header.toString()} from ${sender.toString("hex")}`);
                 break;
         }
-    }   
+    }
 }
 
 async function start() {
@@ -136,14 +136,14 @@ function addNode(port: number) {
         portHashes.get(port)?.hashes.push(hash.hash);
     }
 
+    pub.send(['ring_update', 'add', port.toString()]);
+
     if (socket) {
         backend.send([socket, null, 'ready', serverConf.num_virtual_nodes.toString(), serverConf.num_replicas.toString(), serverConf.ports.join(',')]);
     }
 
-    pub.send(['ring_update', 'add', port.toString()]);
-
     serverConf.ports.push(port);
-    writeFile('servers.json', JSON.stringify(serverConf), (err) => {
+    writeFile('servers.json', JSON.stringify(serverConf, null, 4), (err) => {
         if (err) {
             console.error('Error saving changes to servers.json');
         }
@@ -166,7 +166,7 @@ function removeNode(port: number) {
     pub.send(['ring_update', 'remove', port.toString()]);
 
     serverConf.ports.splice(serverConf.ports.indexOf(port), 1);
-    writeFile('servers.json', JSON.stringify(serverConf), (err) => {
+    writeFile('servers.json', JSON.stringify(serverConf, null, 4), (err) => {
         if (err) {
             console.error('Error saving changes to servers.json');
         }

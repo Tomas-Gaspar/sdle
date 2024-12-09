@@ -22,8 +22,10 @@ const hashesPort: { hash: string, port: number}[] = [];
 const socket = new zmq.Request();
 
 // To be used for gossiping
-const pub = new zmq.Publisher();
+const xpub = new zmq.XPublisher();
 const sub = new zmq.Subscriber();
+
+const pubQueue:any[] = [];
 
 const portsSubscribe = new Set<number>();
 const hashesSubscribe = new Set<string>();
@@ -101,7 +103,13 @@ function processRequest(req: Buffer[]) {
                 listModel.saveList(req[2].toString(), list.title, list.crdt).then(() => {
                     const messageList = JSON.stringify(list);
                     const hash = createHash('sha256').update(req[2]).digest('hex');
-                    pub.send([hash, 'update', req[2], messageList]);
+                    if (pubQueue.length === 50)
+                        pubQueue.shift();
+
+                    const message = [hash, 'update', req[2], messageList];
+                    pubQueue.push(message);
+
+                    xpub.send(message);
                     socket.send(['reply', client, messageList]);
                 }).catch(err => {
                     socket.send(['error', client, err.message]);
@@ -114,6 +122,18 @@ function processRequest(req: Buffer[]) {
             break;
     }
     
+}
+
+async function handlePublisher() {
+    for await (const [event] of xpub) {
+        // When there is a new subscription send the last messages that were published (max 50)
+        if (event[0] === 0x01) {
+            console.log(`Replaying last ${pubQueue.length} messages`);
+            for (const message of pubQueue) {
+                xpub.send(message)
+            }
+        }
+    }
 }
 
 async function handleSubscriptions() {
@@ -247,12 +267,13 @@ function removeServer(port: number) {
 }
 
 async function start() {
-    await pub.bind(`tcp://127.0.0.1:${process.argv[2]}`);
+    await xpub.bind(`tcp://127.0.0.1:${process.argv[2]}`);
     socket.connect('tcp://127.0.0.1:5555');
     socket.send(['ready', process.argv[2]]);
 
     await Promise.all([
         handeRequests(),
+        handlePublisher(),
         handleSubscriptions()
     ]);
 }
@@ -262,8 +283,8 @@ async function stop() {
         await socket.send(['disconnect']);
         socket.close()
     }
-    if (!pub.closed) {
-        pub.close();
+    if (!xpub.closed) {
+        xpub.close();
     }
     if (!sub.closed) {
         sub.close();
