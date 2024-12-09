@@ -57,6 +57,13 @@ body {
     font-family: "Verdana", sans-serif;
 }
 
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 1em;
+}
+
 header a img{
     margin-top: .5em;
     margin-left: .5em;

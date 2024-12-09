@@ -36,7 +36,7 @@ const createInterval = (listModel: ListModel) => {
       if (currState.page !== "") {
         const receivedCrdt = await receiveData(currState.page);
         const title = (await listModel.getList(currState.page)).title;
-        listModel.saveList(currState.page, title, receivedCrdt);
+        // listModel.saveList(currState.page, title, receivedCrdt);
 
         console.log("Sending data of page", currState.page);
       }
@@ -75,7 +75,7 @@ const apiRoutes = (listModel: ListModel) => {
             const list = await listModel.getList(req.body.listId);
             const crdt = list.crdt;
             const newCrdt = await sendData(req.body.listId, crdt);
-            listModel.saveList(req.body.listId, list.title, newCrdt);
+            // listModel.saveList(req.body.listId, list.title, newCrdt);
         }
 
         res.json(req.body.itemName);
@@ -96,7 +96,7 @@ const apiRoutes = (listModel: ListModel) => {
             const list = await listModel.getList(listId);
             const crdt = list.crdt;
             const newCrdt = await sendData(listId, crdt);
-            listModel.saveList(listId, list.title, newCrdt);
+            // listModel.saveList(listId, list.title, newCrdt);
         }    
 
         res.json({ id: listId, title: req.body.listName, items: [] });
@@ -116,7 +116,7 @@ const apiRoutes = (listModel: ListModel) => {
             const list = await listModel.getList(req.body.listId);
             const crdt = list.crdt;
             const newCrdt = await sendData(req.body.listId, crdt);
-            listModel.saveList(req.body.listId, list.title, newCrdt);
+            // listModel.saveList(req.body.listId, list.title, newCrdt);
         }    
 
         res.json({ name: req.body.itemName, quantity: req.body.itemQuantity });
@@ -137,8 +137,8 @@ const apiRoutes = (listModel: ListModel) => {
             const list = await listModel.getList(req.body.listId);
             const crdt = list.crdt;
             const newCrdt = await sendData(req.body.listId, crdt);
-            listModel.saveList(req.body.listId, list.title, newCrdt);
-        }    
+            // listModel.saveList(req.body.listId, list.title, newCrdt);
+        }   
 
         res.json({ name: req.body.itemName, quantity: newQuantity });
         res.status(200).send();
@@ -158,7 +158,7 @@ const apiRoutes = (listModel: ListModel) => {
             const list = await listModel.getList(req.body.listId);
             const crdt = list.crdt;
             const newCrdt = await sendData(req.body.listId, crdt);
-            listModel.saveList(req.body.listId, list.title, newCrdt);
+            // listModel.saveList(req.body.listId, list.title, newCrdt);
         }
 
         res.json({ name: req.body.itemName, quantity: newQuantity });
@@ -180,7 +180,7 @@ const apiRoutes = (listModel: ListModel) => {
               const list = await listModel.getList(listId);
               const crdt = list.crdt;
               const newCrdt = await sendData(listId, crdt);
-              await listModel.saveList(listId, list.title, newCrdt);
+              // await listModel.saveList(listId, list.title, newCrdt);
             }
             
             createInterval(listModel);

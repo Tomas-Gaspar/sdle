@@ -17,6 +17,9 @@ function sendAjaxRequest(method, url, data, handler) {
   
 function addEventListeners() {
 
+    let toggleInternetBtn = document.getElementById('internet-btn');
+    if (toggleInternetBtn) toggleInternetBtn.addEventListener('change', (event) => {toggleInternet(event)});
+
     let createListBtn = document.getElementById('create-btn');
     if (createListBtn) createListBtn.addEventListener('click', showCreateList);
 
@@ -65,6 +68,28 @@ function addEventListeners() {
           i.querySelector('p').style.textDecoration = 'line-through';
         }
     });
+}
+
+function toggleInternet(event) {
+  if (event.target.checked) {
+    sendAjaxRequest('post', '/api/internet', {internet: true}, turnInternetOnHandler);
+  } else {
+    sendAjaxRequest('post', '/api/internet', {internet: false}, turnInternetOffHandler);
+  }
+}
+
+function turnInternetOnHandler() {
+  internetBtn = document.getElementById('internet-btn');
+  internetInput = internetBtn.querySelector('input');
+  internetInput.setAttribute('data-id', true);
+  console.log("Internet is turned ON");
+}
+
+function turnInternetOffHandler() {
+  internetBtn = document.getElementById('internet-btn');
+  internetInput = internetBtn.querySelector('input');
+  internetInput.setAttribute('data-id', false);
+  console.log("Internet is turned OFF");
 }
 
 function showCreateList() {
