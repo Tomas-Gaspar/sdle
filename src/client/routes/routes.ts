@@ -84,6 +84,31 @@ const apiRoutes = (listModel: ListModel) => {
         res.status(500).send();
       }
     });
+
+    router.post('/download', async (req, res) => {
+      try {
+        if (currState.internet) {
+
+          const listId = req.body.listId;
+          const crdt = await receiveData(listId);
+
+          /* console.log("INTERACTOR: Sending create list to the server");
+  
+          const list = await listModel.getList(listId);
+          const crdt = list.crdt;
+          const newCrdt = await sendData(listId, crdt); */
+          // listModel.saveList(listId, list.title, newCrdt);
+
+          res.json({ internet: true, id: listId, title: '' });
+
+        }
+        else res.json({internet: false});
+
+        res.status(200).send();
+      } catch (err) {
+        res.status(500).send();
+      }
+    });
   
     router.post('/create', async (req, res) => {
       try {
