@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { list, ListModel } from '../../common/ListModel';
-import { create } from 'domain';
-import { send } from 'process';
+import { AWORStructure, AWORVal } from '../../common/crdt/AWORStructure';
 
 const router = Router();
 
@@ -12,27 +11,20 @@ const currState = {
 
 let sendDataInterval: NodeJS.Timeout | null;
 
-const sendData = async (action: string, data: any) => {
-    const url = "http://localhost:XXXX/api/" + action;
+const sendData = async (id: String, crdt: AWORStructure<AWORVal>) => {
+    const url = "http://localhost:XXXX/api/" + id;
     const response = null;
 
-    switch (action) {
-        case "allData":
-            break;
-        case "removeItem":
-            break;
-        case "pageData":
-            break;
-        case "createList":
-            break;
-        case "createItem":
-            break;
-        default:
-            break;
-    }
-
-    return response;
+    return crdt;
 };
+
+const receiveData = async (id: string) => {
+    const url = "http://localhost:XXXX/api/" + id;
+    const response = null;
+    const crdt = new AWORStructure<AWORVal>(id);
+
+    return crdt;
+}
 
 const createInterval = (listModel: ListModel) => {
     if (sendDataInterval || !currState.internet) return;
@@ -40,10 +32,13 @@ const createInterval = (listModel: ListModel) => {
     console.log("INTERACTOR: Creating interval to send data to the server");
 
     sendDataInterval = setInterval(async () => {
-        if (currState.page !== "") {
-            await sendData("pageData", listModel.getList(currState.page));
-            console.log("Sending data of page", currState.page);
-        }
+      if (currState.page !== "") {
+        const receivedCrdt = await receiveData(currState.page);
+        const title = (await listModel.getList(currState.page)).title;
+        listModel.saveList(currState.page, title, receivedCrdt);
+
+        console.log("Sending data of page", currState.page);
+      }
     }
     , 5000);
 };
@@ -74,7 +69,11 @@ const apiRoutes = (listModel: ListModel) => {
       
       if (currState.internet) {
         console.log("INTERACTOR: Sending remove item to the server");
-        await sendData("removeItem", { listId: req.body.listId, itemName: req.body.itemName });
+
+        const list = await listModel.getList(req.body.listId);
+        const crdt = list.crdt;
+        const newCrdt = await sendData(req.body.listId, crdt);
+        listModel.saveList(req.body.listId, list.title, newCrdt);
       }
 
       res.json(req.body.itemName);
@@ -90,7 +89,11 @@ const apiRoutes = (listModel: ListModel) => {
 
       if (currState.internet) {
         console.log("INTERACTOR: Sending create list to the server");
-        await sendData("createList", { listId: req.body.listId, listName: req.body.listName });
+
+        const list = await listModel.getList(req.body.listId);
+        const crdt = list.crdt;
+        const newCrdt = await sendData(req.body.listId, crdt);
+        listModel.saveList(req.body.listId, list.title, newCrdt);
       }
 
       res.json({ id: req.body.listId, title: req.body.listName, items: [] });
@@ -106,7 +109,11 @@ const apiRoutes = (listModel: ListModel) => {
 
       if (currState.internet) {
         console.log("INTERACTOR: Sending create item to the server");
-        await sendData("createItem", { listId: req.body.listId, itemName: req.body.itemName, itemQuantity: req.body.itemQuantity });
+
+        const list = await listModel.getList(req.body.listId);
+        const crdt = list.crdt;
+        const newCrdt = await sendData(req.body.listId, crdt);
+        listModel.saveList(req.body.listId, list.title, newCrdt);
       }
 
       res.json({ name: req.body.itemName, quantity: req.body.itemQuantity });
@@ -124,7 +131,12 @@ const apiRoutes = (listModel: ListModel) => {
         console.log("INTERACTOR: Internet ON");
 
         currState.internet = true;
-        await sendData("allData", listModel);
+        for (const { id: listId } of await listModel.getAllListsIDs()) {
+          const list = await listModel.getList(listId);
+          const crdt = list.crdt;
+          const newCrdt = await sendData(listId, crdt);
+          await listModel.saveList(listId, list.title, newCrdt);
+        }
         
         createInterval(listModel);
       } else {
