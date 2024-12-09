@@ -10,7 +10,9 @@
         "crypto": "^1.0.1",
         "zeromq": "^6.1.2",
         "sqlite3": "^5.1.7",
-        "express": "^4.21.1"
+        "express": "^4.21.1",
+        "express-handlebars": "^8.0.1",
+        "uuid": "^11.0.3"
     },
     "devDependencies": {
         "@types/express": "^5.0.0",
