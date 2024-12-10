@@ -88,7 +88,13 @@ async function handleBackend() {
             case 'reply':
                 const client = rest[0];
                 if (client.length !== 0)
-                    frontend.send([client, null, ...rest.slice(1)]);
+                    frontend.send([client, null, 'reply', ...rest.slice(1)]);
+
+                break;
+            case 'error':
+                const clientError = rest[0];
+                if (clientError.length !== 0)
+                    frontend.send([clientError, null, 'error']);
 
                 break;
             case 'disconnect':

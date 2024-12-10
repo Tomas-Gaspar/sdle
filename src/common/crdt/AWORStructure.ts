@@ -1,7 +1,9 @@
+import { CausalCounter } from "./CausalCounter";
 import { Dot, DotContext } from "./DotContext";
 
 interface CRDT {
     join(other: CRDT): void;
+    toString(): string;
 }
 
 interface AWORVal {
@@ -73,9 +75,48 @@ class AWORStructure<V extends AWORVal> implements CRDT {
 
     toString(): string {
         return "AWORStructure:(\n" +
+            this.context.toString() + "\n" +
             Array.from(this.elements.entries()).map(([key, value]) => {
-                return `\t${key}: ${value.dot.toString()}${value.crdt ? `(${value.crdt.toString()})` : ''}`;
+                return `${key}: ${value.dot.toString()}${value.crdt ? `(${value.crdt.toString()})` : ''}`;
             }).join('\n') + "\n)";
+    }
+
+    static fromString(str: string): AWORStructure<AWORVal> {
+        const lines = str.split('\n').slice(1, -1);
+        const elements = new Map<string, AWORVal>();
+
+        const context = DotContext.fromString(lines.shift() || '');
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (line === '') continue;
+
+            const [key, rest] = line.split(': ');
+            const dotStr = rest.split('(')[0];
+            const dot = Dot.fromString(dotStr);
+
+            let crdtStr = rest.split('(').slice(1)[0];
+            let crdt = undefined;
+            if (crdtStr === 'CC') {
+                crdtStr += '(\n';
+                let count = 0;
+                for (let j = i + 1; j < lines.length; j++) {
+                    crdtStr += lines[j] + '\n';
+                    if (lines[j].endsWith(')')) {
+                        if (count === 1) {
+                            i = j + 1;
+                            break;
+                        } else count++;
+                    }
+                }
+                crdtStr += ')';
+                crdt = CausalCounter.fromString(crdtStr);
+            }
+
+            elements.set(key, {dot: dot, crdt: crdt});
+        }
+
+        return new AWORStructure('', context, elements);
     }
 }
 

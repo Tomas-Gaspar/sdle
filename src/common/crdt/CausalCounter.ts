@@ -42,7 +42,18 @@ class CausalCounter implements CRDT {
     }
 
     toString(): string {
-        return `PNCounter(${this.value()})`;
+        return "CC(\n" + 
+            this.pos.toString() + "\n" +
+            this.neg.toString() + "\n" +
+        ")";
+    }
+
+    static fromString(str: string): CausalCounter {
+        const lines = str.split("\n");
+        const pos = AWORStructure.fromString(lines.slice(1, 5).join('\n')).getContext();
+        const neg = AWORStructure.fromString(lines.slice(5, 9).join('\n')).getContext();
+
+        return new CausalCounter('', pos, neg);
     }
 }
 

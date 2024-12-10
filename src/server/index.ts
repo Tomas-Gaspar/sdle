@@ -2,6 +2,7 @@ import * as zmq from 'zeromq';
 import { createHash } from 'crypto';
 import { getDatabaseConnection } from '../common/database/init';
 import { ListModel } from '../common/ListModel';
+import { AWORStructure } from '../common/crdt/AWORStructure';
 
 if (process.argv.length < 3 || isNaN(parseInt(process.argv[2]))) {
     console.error('Usage: node index.js <port>');
@@ -91,30 +92,31 @@ function processRequest(req: Buffer[]) {
         // [ 'request', 'get', 'list_id' ]
         case 'get':
             listModel.getList(req[2].toString()).then(list => {
-                socket.send(['reply', client, JSON.stringify(list)]);
+                socket.send(['reply', client, list.title, list.crdt.toString()]);
             }).catch(err => {
                 socket.send(['error', client, err.message]);
             });
             break;
-        // [ 'request', 'put', 'list_id', 'list' ]
+        // [ 'request', 'put', 'list_id', 'list_title', 'list' ]
         case 'put':
             listModel.getList(req[2].toString()).then(list => {
-                list.crdt.join(JSON.parse(req[3].toString()));
+                list.crdt.join(AWORStructure.fromString(req[4].toString()));
                 listModel.saveList(req[2].toString(), list.title, list.crdt).then(() => {
-                    const messageList = JSON.stringify(list);
                     const hash = createHash('sha256').update(req[2]).digest('hex');
                     if (pubQueue.length === 50)
                         pubQueue.shift();
 
-                    const message = [hash, 'update', req[2], messageList];
+                    const messageList = [list.title, list.crdt.toString()];
+                    const message = [hash, 'update', req[2], ...messageList];
                     pubQueue.push(message);
-
+                    
                     xpub.send(message);
-                    socket.send(['reply', client, messageList]);
+                    socket.send(['reply', client, ...messageList]);
                 }).catch(err => {
                     socket.send(['error', client, err.message]);
                 });
             }).catch(err => {
+                console.log(err);
                 socket.send(['error', client, err.message]);
             });
             break;
@@ -139,10 +141,10 @@ async function handlePublisher() {
 async function handleSubscriptions() {
     for await (const [header, ...req] of sub) {
         switch (header.toString()) {
-            // [ 'update', 'list_id', 'list' ]
+            // [ 'update', 'list_id', 'list_title', 'list' ]
             case 'update':
                 listModel.getList(req[1].toString()).then(list => {
-                    list.crdt.join(JSON.parse(req[2].toString()));
+                    list.crdt.join(AWORStructure.fromString(req[3].toString()));
                     listModel.saveList(req[1].toString(), list.title, list.crdt);
                 });
             case 'ring_update':
