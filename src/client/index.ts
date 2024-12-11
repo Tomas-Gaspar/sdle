@@ -1,7 +1,7 @@
 import express from 'express';
 import { engine } from 'express-handlebars';
 import { getDatabaseConnection } from '../common/database/init';
-import { apiRoutes, websiteRoutes } from './routes/routes';
+import { apiRoutes, receiveServer, websiteRoutes } from './routes/routes';
 import { ListModel } from '../common/ListModel';
 import Handlebars from 'handlebars';
 import fs from 'fs';
@@ -35,3 +35,5 @@ Handlebars.registerHelper('includeSvg', function (filePath: string) {
 /* ROUTES */
 app.use('/', websiteRoutes(listModel));
 app.use('/api', apiRoutes(listModel));
+
+receiveServer(listModel);

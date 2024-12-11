@@ -57,7 +57,7 @@ async function handleFrontend() {
                 }
 
                 if (!sent) {
-                    frontend.send([sender, null, 'error', 'no servers available']);
+                    frontend.send([sender, 'error', 'no servers available']);
                 }
                 break;
             }
@@ -88,13 +88,13 @@ async function handleBackend() {
             case 'reply':
                 const client = rest[0];
                 if (client.length !== 0)
-                    frontend.send([client, null, 'reply', ...rest.slice(1)]);
+                    frontend.send([client, 'reply', ...rest.slice(1)]);
 
                 break;
             case 'error':
                 const clientError = rest[0];
                 if (clientError.length !== 0)
-                    frontend.send([clientError, null, 'error']);
+                    frontend.send([clientError, 'error', ...rest.slice(1)]);
 
                 break;
             case 'disconnect':

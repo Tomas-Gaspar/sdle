@@ -1,68 +1,44 @@
 import { Router } from 'express';
 import { ListModel } from '../../common/ListModel';
 import { v4 as uuidv4 } from 'uuid';
-import { Request } from 'zeromq';
+import { Dealer } from 'zeromq';
 import { AWORStructure } from '../../common/crdt/AWORStructure';
 
-const router = Router();
-
-const req = new Request();
-req.connect('tcp://localhost:5556');
+const dealer = new Dealer();
+dealer.connect('tcp://localhost:5556');
 
 const currState = {
     internet: true,
     page: undefined as string | undefined
 };
 
-let listModel: ListModel;
-
-async function requestServer(method: string, listId: string, payload?: string[]) {
-    if (payload)
-        req.send([method, listId, ...payload]);
-    else
-        req.send([method, listId]);
-
-    const localList = await listModel.getList(listId);
-
-    req.receive().then(async ([...response]) => {
-        const responseStr = response[0].toString();
-        if (responseStr === 'error') {
-            console.error('Error in the server');
-            return;
+async function receiveServer(listModel: ListModel) {
+    for await (const reply of dealer) {
+        if (reply[0].toString() === 'error') {
+            console.error('Error: ' + reply[1].toString());
+            continue;
         }
-        
-        const title = response[1].toString();
-        const crdt = AWORStructure.fromString(response[2].toString());
-        localList.crdt.join(crdt);
 
-        await listModel.saveList(listId, title, localList.crdt);
-    });
+        const id = reply[1].toString();
+        const title = reply[2].toString();
+        const crdt = AWORStructure.fromString(reply[3].toString());
+
+        listModel.getList(id).then((list) => {
+            list.crdt.join(crdt);
+            listModel.saveList(id, title, list.crdt);
+        });
+    }
 }
 
-let sendDataInterval: NodeJS.Timeout | null;
-const createInterval = () => {
-    if (sendDataInterval || !currState.internet) return;
-
-    console.log("INTERACTOR: Creating interval to send data to the server");
-
-    sendDataInterval = setInterval(async () => {
-        if (currState.page) {
-            requestServer('get', currState.page);
-        }
-    }, 5000);
-};
-
-const killInterval = () => {
-    console.log("INTERACTOR: Killing interval to send data to the server");
-
-    if (sendDataInterval) {
-        clearInterval(sendDataInterval);
-        sendDataInterval = null;
+setInterval(async () => {
+    if (currState.page && currState.internet) {
+        console.log("INTERACTOR: Requesting page from the server");
+        dealer.send([null, 'get', currState.page]);
     }
-};
+}, 5000);
 
-const apiRoutes = (model: ListModel) => {
-    listModel = model;
+const apiRoutes = (listModel: ListModel) => {
+    const router = Router();
 
     router.post('/remove', async (req, res) => {
         try {
@@ -82,7 +58,7 @@ const apiRoutes = (model: ListModel) => {
                 console.log("INTERACTOR: Sending remove item to the server");
 
                 const list = await listModel.getList(req.body.listId);
-                requestServer('put', req.body.listId, [list.title, list.crdt.toString()]);
+                dealer.send([null, 'put', req.body.listId, list.title, list.crdt.toString()]);
             }
 
             res.json(req.body.itemName);
@@ -101,7 +77,7 @@ const apiRoutes = (model: ListModel) => {
                 console.log("INTERACTOR: Sending create list to the server");
 
                 const list = await listModel.getList(listId);
-                requestServer('put', listId, [list.title, list.crdt.toString()]);
+                dealer.send([null, 'put', listId, list.title, list.crdt.toString()]);
             }
 
             res.json({ id: listId, title: req.body.listName, items: [] });
@@ -119,7 +95,7 @@ const apiRoutes = (model: ListModel) => {
                 console.log("INTERACTOR: Sending create item to the server");
 
                 const list = await listModel.getList(req.body.listId);
-                requestServer('put', req.body.listId, [list.title, list.crdt.toString()]);
+                dealer.send([null, 'put', req.body.listId, list.title, list.crdt.toString()]);
             }
 
             res.json({ name: req.body.itemName, quantity: req.body.itemQuantity });
@@ -138,7 +114,7 @@ const apiRoutes = (model: ListModel) => {
                 console.log("INTERACTOR: Sending increase item to the server");
 
                 const list = await listModel.getList(req.body.listId);
-                requestServer('put', req.body.listId, [list.title, list.crdt.toString()]);
+                dealer.send([null, 'put', req.body.listId, list.title, list.crdt.toString()]);
             }
 
             res.json({ name: req.body.itemName, quantity: newQuantity });
@@ -157,7 +133,7 @@ const apiRoutes = (model: ListModel) => {
                 console.log("INTERACTOR: Sending decrease item to the server");
 
                 const list = await listModel.getList(req.body.listId);
-                requestServer('put', req.body.listId, [list.title, list.crdt.toString()]);
+                dealer.send([null, 'put', req.body.listId, list.title, list.crdt.toString()]);
             }
 
             res.json({ name: req.body.itemName, quantity: newQuantity });
@@ -177,15 +153,11 @@ const apiRoutes = (model: ListModel) => {
                 currState.internet = true;
                 for (const listId of await listModel.getAllListsIDs()) {
                     const list = await listModel.getList(listId);
-                    requestServer('put', listId, [list.title, list.crdt.toString()]);
+                    dealer.send([null, 'put', listId, list.title, list.crdt.toString()]);
                 }
-
-                createInterval();
             } else {
                 console.log("INTERACTOR: Internet OFF");
-
                 currState.internet = false;
-                killInterval();
             }
 
             res.json({ internet: currState.internet });
@@ -198,9 +170,8 @@ const apiRoutes = (model: ListModel) => {
     return router;
 };
 
-const websiteRoutes = (model: ListModel) => {
-    listModel = model;
-
+const websiteRoutes = (listModel: ListModel) => {
+    const router = Router();
     router.get('/', async (req, res) => {
         const listsIDs = await listModel.getAllListsIDs();
 
@@ -228,4 +199,4 @@ const websiteRoutes = (model: ListModel) => {
     return router;
 };
 
-export { apiRoutes, websiteRoutes };
+export { apiRoutes, websiteRoutes, receiveServer };

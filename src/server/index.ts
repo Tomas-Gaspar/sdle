@@ -92,7 +92,7 @@ function processRequest(req: Buffer[]) {
         // [ 'request', 'get', 'list_id' ]
         case 'get':
             listModel.getList(req[2].toString()).then(list => {
-                socket.send(['reply', client, list.title, list.crdt.toString()]);
+                socket.send(['reply', client, req[2].toString(), list.title, list.crdt.toString()]);
             }).catch(err => {
                 socket.send(['error', client, err.message]);
             });
@@ -106,7 +106,7 @@ function processRequest(req: Buffer[]) {
                     if (pubQueue.length === 50)
                         pubQueue.shift();
 
-                    const messageList = [list.title, list.crdt.toString()];
+                    const messageList = [req[2].toString(), list.title, list.crdt.toString()];
                     const message = [hash, 'update', req[2], ...messageList];
                     pubQueue.push(message);
                     
@@ -139,6 +139,7 @@ async function handlePublisher() {
 
 async function handleSubscriptions() {
     for await (const [header, ...req] of sub) {
+        console.log(`Received: ${header.toString()}` + req.map(r => r.toString()));
         switch (header.toString()) {
             // [ 'update', 'list_id', 'list_title', 'list' ]
             case 'update':
