@@ -116,7 +116,6 @@ function processRequest(req: Buffer[]) {
                     socket.send(['error', client, err.message]);
                 });
             }).catch(err => {
-                console.log(err);
                 socket.send(['error', client, err.message]);
             });
             break;

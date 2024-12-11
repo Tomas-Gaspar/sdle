@@ -59,10 +59,14 @@ class ListModel {
                 for (const row of rows) {
                     if (!row.name) continue;
 
+                    const pos = AWORStructure.fromString(row.context_pos);
+                    pos.setId(this.replicaId);
+                    const neg = AWORStructure.fromString(row.context_neg);
+                    neg.setId(this.replicaId);
+
                     elements.set(row.name, {
                         dot: Dot.fromString(row.dot),
-                        // Must set the ID before performing any increment or decrement
-                        crdt: new CausalCounter(this.replicaId, DotContext.fromString(row.context_pos), DotContext.fromString(row.context_neg))
+                        crdt: new CausalCounter(this.replicaId, pos, neg)
                     });    
                 }
 

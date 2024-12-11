@@ -14,7 +14,56 @@ const currState = {
     page: undefined as string | undefined
 };
 
-const apiRoutes = (listModel: ListModel) => {
+let listModel: ListModel;
+
+async function requestServer(method: string, listId: string, payload?: string[]) {
+    if (payload)
+        req.send([method, listId, ...payload]);
+    else
+        req.send([method, listId]);
+
+    const localList = await listModel.getList(listId);
+
+    req.receive().then(async ([...response]) => {
+        const responseStr = response[0].toString();
+        if (responseStr === 'error') {
+            console.error('Error in the server');
+            return;
+        }
+        
+        const title = response[1].toString();
+        const crdt = AWORStructure.fromString(response[2].toString());
+        localList.crdt.join(crdt);
+
+        await listModel.saveList(listId, title, localList.crdt);
+    });
+}
+
+let sendDataInterval: NodeJS.Timeout | null;
+const createInterval = () => {
+    if (sendDataInterval || !currState.internet) return;
+
+    console.log("INTERACTOR: Creating interval to send data to the server");
+
+    sendDataInterval = setInterval(async () => {
+        if (currState.page) {
+            requestServer('get', currState.page);
+        }
+    }, 5000);
+};
+
+const killInterval = () => {
+    console.log("INTERACTOR: Killing interval to send data to the server");
+
+    if (sendDataInterval) {
+        clearInterval(sendDataInterval);
+        sendDataInterval = null;
+    }
+};
+
+const apiRoutes = (model: ListModel) => {
+    listModel = model;
+
     router.post('/remove', async (req, res) => {
         try {
             await listModel.deleteList(req.body.listId);
@@ -146,54 +195,12 @@ const apiRoutes = (listModel: ListModel) => {
         }
     });
 
-    async function requestServer(method: string, listId: string, payload?: string[]) {
-        if (payload)
-            req.send([method, listId, ...payload]);
-        else
-            req.send([method, listId]);
-    
-        const localList = await listModel.getList(listId);
-    
-        req.receive().then(async ([...response]) => {
-            const responseStr = response[0].toString();
-            if (responseStr === 'error') {
-                console.error('Error in the server');
-                return;
-            }
-            
-            const title = response[1].toString();
-            const crdt = AWORStructure.fromString(response[2].toString());
-            localList.crdt.join(crdt);
-
-            await listModel.saveList(listId, title, localList.crdt);
-        });
-    }
-    
-    let sendDataInterval: NodeJS.Timeout | null;
-    const createInterval = () => {
-        if (sendDataInterval || !currState.internet) return;
-    
-        console.log("INTERACTOR: Creating interval to send data to the server");
-    
-        sendDataInterval = setInterval(async () => {
-            if (currState.page)
-                requestServer('get', currState.page);
-        }, 5000);
-    };
-    
-    const killInterval = () => {
-        console.log("INTERACTOR: Killing interval to send data to the server");
-    
-        if (sendDataInterval) {
-            clearInterval(sendDataInterval);
-            sendDataInterval = null;
-        }
-    };
-
     return router;
 };
 
-const websiteRoutes = (listModel: ListModel) => {
+const websiteRoutes = (model: ListModel) => {
+    listModel = model;
+
     router.get('/', async (req, res) => {
         const listsIDs = await listModel.getAllListsIDs();
 

@@ -1,4 +1,4 @@
-import { Dot, DotContext } from './DotContext';
+import { Dot } from './DotContext';
 import { CRDT, AWORStructure } from './AWORStructure';
 
 class CausalCounter implements CRDT {
@@ -6,10 +6,10 @@ class CausalCounter implements CRDT {
     private pos: AWORStructure<{ dot: Dot }>;
     private neg: AWORStructure<{ dot: Dot }>;
 
-    constructor(id: string, pos?: DotContext, neg?: DotContext) {
+    constructor(id: string, pos?: AWORStructure<{ dot: Dot }>, neg?: AWORStructure<{ dot: Dot }>) {
         this.id = id;
-        this.pos = new AWORStructure(id, pos);
-        this.neg = new AWORStructure(id, neg);
+        this.pos = pos || new AWORStructure(id);
+        this.neg = neg || new AWORStructure(id);
     }
 
     inc(n = 1): void {
@@ -37,8 +37,8 @@ class CausalCounter implements CRDT {
             this.inc(-value);
     }
 
-    getContext(): {pos: DotContext, neg: DotContext} {
-        return {pos: this.pos.getContext(), neg: this.neg.getContext()};
+    getContext(): {pos: AWORStructure<{dot: Dot}>, neg: AWORStructure<{dot: Dot}>} {
+        return {pos: this.pos, neg: this.neg};
     }
 
     toString(): string {
@@ -50,8 +50,8 @@ class CausalCounter implements CRDT {
 
     static fromString(str: string): CausalCounter {
         const lines = str.split("\n");
-        const pos = AWORStructure.fromString(lines.slice(1, 5).join('\n')).getContext();
-        const neg = AWORStructure.fromString(lines.slice(5, 9).join('\n')).getContext();
+        const pos = AWORStructure.fromString(lines.slice(1, 5).join('\n'));
+        const neg = AWORStructure.fromString(lines.slice(5, 9).join('\n'));
 
         return new CausalCounter('', pos, neg);
     }

@@ -33,6 +33,10 @@ class AWORStructure<V extends AWORVal> implements CRDT {
         return this.elements;
     }
 
+    setId(id: string) {
+        this.id = id;
+    }
+
     add(key: string) {
         const dot = this.context.makeDot(this.id);
         this.elements.set(key, {dot: dot} as V);
