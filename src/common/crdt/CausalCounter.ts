@@ -50,8 +50,10 @@ class CausalCounter implements CRDT {
 
     static fromString(str: string): CausalCounter {
         const lines = str.split("\n");
-        const pos = AWORStructure.fromString(lines.slice(1, 5).join('\n'));
-        const neg = AWORStructure.fromString(lines.slice(5, 9).join('\n'));
+        const closingParen = lines.findIndex(l => l === ')');
+        const pos = AWORStructure.fromString(lines.slice(1, closingParen + 1).join('\n'));
+        const closingParen2 = lines.slice(closingParen + 1).findIndex(l => l === ')');
+        const neg = AWORStructure.fromString(lines.slice(closingParen + 1, closingParen + 1 + closingParen2 + 1).join('\n'));
 
         return new CausalCounter('', pos, neg);
     }

@@ -23,7 +23,7 @@ const hashesPort: { hash: string, port: number}[] = [];
 const socket = new zmq.Request();
 
 // To be used for gossiping
-const xpub = new zmq.XPublisher();
+const xpub = new zmq.XPublisher({ verbosity: "allSubs" });
 const sub = new zmq.Subscriber();
 
 const pubQueue:any[] = [];
@@ -144,7 +144,6 @@ async function handlePublisher() {
 
 async function handleSubscriptions() {
     for await (const [topic, header, ...req] of sub) {
-        console.log(`Received: ${header.toString()}` + req.map(r => r.toString()));
         if (topic.toString() === 'ring_update') {
             if (header.toString() === 'add') {
                 const port = parseInt(req[1].toString());

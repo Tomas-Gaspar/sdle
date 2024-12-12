@@ -2,6 +2,7 @@ import sqlite from 'sqlite3';
 import { AWORStructure, AWORVal } from './crdt/AWORStructure';
 import { Dot, DotContext } from './crdt/DotContext';
 import { CausalCounter } from './crdt/CausalCounter';
+import { Mutex } from 'async-mutex';
 
 type list_item = {
     name: string,
@@ -27,6 +28,7 @@ type list = {
 class ListModel {
     private db: sqlite.Database;
     private replicaId: string;
+    private mutex: Mutex = new Mutex();
 
     constructor(db: sqlite.Database, replicaId: string) {
         this.db = db;
@@ -89,38 +91,40 @@ class ListModel {
         if (!crdt)
             crdt = new AWORStructure(this.replicaId, new DotContext(), new Map<string, AWORVal>());
 
-        return new Promise((resolve, reject) => {
-            this.db.serialize(() => {
-                this.db.run('BEGIN TRANSACTION');
+        return this.mutex.runExclusive(() => {
+            return new Promise((resolve, reject) => {
+                this.db.serialize(() => {
+                    this.db.run('BEGIN TRANSACTION');
 
-                const listQuery = 'INSERT OR REPLACE INTO List (id, title, context) VALUES (?, ?, ?)';
-                const listParams: [string, string, string] = [id, title, crdt.getContext().toString()];
+                    const listQuery = 'INSERT OR REPLACE INTO List (id, title, context) VALUES (?, ?, ?)';
+                    const listParams: [string, string, string] = [id, title, crdt.getContext().toString()];
 
-                this.db.run(listQuery, listParams, (err) => {
-                    if (err) {
-                        this.db.run('ROLLBACK');
-                        return reject(err);
-                    }
-
-                    const itemQuery = 'INSERT OR REPLACE INTO Item (name, dot, context_pos, context_neg, list_id) VALUES (?, ?, ?, ?, ?)';
-
-                    for (const item of crdt.getElements()) {
-                        const counter_context = (item[1].crdt as CausalCounter).getContext();
-                        const itemParams: [string, string, string, string, string] = [item[0], item[1].dot.toString(), counter_context.pos.toString(), counter_context.neg.toString(), id];
-                        this.db.run(itemQuery, itemParams, (err) => {
-                            if (err) {
-                                this.db.run('ROLLBACK');
-                                return reject(err);
-                            }
-                        });
-                    }
-
-                    this.db.run('COMMIT', (err) => {
+                    this.db.run(listQuery, listParams, (err) => {
                         if (err) {
                             this.db.run('ROLLBACK');
                             return reject(err);
                         }
-                        resolve();
+
+                        const itemQuery = 'INSERT OR REPLACE INTO Item (name, dot, context_pos, context_neg, list_id) VALUES (?, ?, ?, ?, ?)';
+
+                        for (const item of crdt.getElements()) {
+                            const counter_context = (item[1].crdt as CausalCounter).getContext();
+                            const itemParams: [string, string, string, string, string] = [item[0], item[1].dot.toString(), counter_context.pos.toString(), counter_context.neg.toString(), id];
+                            this.db.run(itemQuery, itemParams, (err) => {
+                                if (err) {
+                                    this.db.run('ROLLBACK');
+                                    return reject(err);
+                                }
+                            });
+                        }
+
+                        this.db.run('COMMIT', (err) => {
+                            if (err) {
+                                this.db.run('ROLLBACK');
+                                return reject(err);
+                            }
+                            resolve();
+                        });
                     });
                 });
             });
@@ -128,15 +132,17 @@ class ListModel {
     }
 
     deleteList(id: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const query = 'DELETE FROM List WHERE id = ?';
-            const params: [string] = [id];
-
-            this.db.run(query, params, (err) => {
-                if (err) {
-                    return reject(err);
-                }
-                resolve();
+        return this.mutex.runExclusive(() => {
+            return new Promise((resolve, reject) => {
+                const query = 'DELETE FROM List WHERE id = ?';
+                const params: [string] = [id];
+    
+                this.db.run(query, params, (err) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    resolve();
+                });
             });
         });
     }
