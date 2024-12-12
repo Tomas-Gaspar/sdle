@@ -103,11 +103,16 @@ function processRequest(req: Buffer[]) {
                 list.crdt.join(AWORStructure.fromString(req[4].toString()));
                 listModel.saveList(req[2].toString(), list.title, list.crdt).then(() => {
                     const hash = createHash('sha256').update(req[2]).digest('hex');
+                    const ringHash = (hashesPort.find(h => h.hash > hash) || hashesPort.at(-1))
+                    if (!ringHash) {
+                        return
+                    }
+
                     if (pubQueue.length === 50)
                         pubQueue.shift();
 
                     const messageList = [req[2].toString(), list.title, list.crdt.toString()];
-                    const message = [hash, 'update', req[2], ...messageList];
+                    const message = [ringHash.hash, 'update', ...messageList];
                     pubQueue.push(message);
                     
                     xpub.send(message);
@@ -138,31 +143,29 @@ async function handlePublisher() {
 }
 
 async function handleSubscriptions() {
-    for await (const [header, ...req] of sub) {
+    for await (const [topic, header, ...req] of sub) {
         console.log(`Received: ${header.toString()}` + req.map(r => r.toString()));
-        switch (header.toString()) {
+        if (topic.toString() === 'ring_update') {
+            if (header.toString() === 'add') {
+                const port = parseInt(req[1].toString());
+                if (port === parseInt(process.argv[2])) {
+                    // everything was done in the ready message
+                    continue;
+                }
+                addServer(port);
+            }
+            else if (header.toString() === 'remove') {
+                const port = parseInt(req[1].toString());
+                removeServer(port);
+            }
+        } else {
             // [ 'update', 'list_id', 'list_title', 'list' ]
-            case 'update':
-                listModel.getList(req[1].toString()).then(list => {
-                    list.crdt.join(AWORStructure.fromString(req[3].toString()));
-                    listModel.saveList(req[1].toString(), list.title, list.crdt);
+            if (header.toString() === 'update') {
+                listModel.getList(req[0].toString()).then(list => {
+                    list.crdt.join(AWORStructure.fromString(req[2].toString()));
+                    listModel.saveList(req[0].toString(), req[1].toString(), list.crdt);
                 });
-            case 'ring_update':
-                if (req[0].toString() === 'add') {
-                    const port = parseInt(req[1].toString());
-                    if (port === parseInt(process.argv[2])) {
-                        // everything was done in the ready message
-                        break;
-                    }
-                    addServer(port);
-                }
-                else if (req[0].toString() === 'remove') {
-                    const port = parseInt(req[1].toString());
-                    removeServer(port);
-                }
-                break;
-            default:
-                break;
+            }
         }
     }
 }
@@ -264,8 +267,10 @@ function removeServer(port: number) {
     for (const hash of newHashes)
         sub.subscribe(hash);
 
-    portsSubscribe.delete(port);
-    sub.disconnect(`tcp://127.0.0.1:${port}`);
+    if (portsSubscribe.has(port)) {
+        portsSubscribe.delete(port);
+        sub.disconnect(`tcp://127.0.0.1:${port}`);
+    }
 }
 
 async function start() {
