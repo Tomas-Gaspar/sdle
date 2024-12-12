@@ -58,8 +58,11 @@ async function handeRequests() {
                             if (idx < 0) {
                                 idx = hashesPort.length + idx;
                             }
-                            portsSubscribe.add(hashesPort[idx].port);
-                            hashesSubscribe.add(hashesPort[idx].hash);
+
+                            if (hashesPort[idx].port !== parseInt(process.argv[2])) {
+                                portsSubscribe.add(hashesPort[idx].port);
+                                hashesSubscribe.add(hashesPort[idx].hash);
+                            }
                         }
                     }
                 }

@@ -38,9 +38,9 @@ async function handleFrontend() {
         const hash = createHash('sha256').update(rest[1]).digest('hex');
 
         for (let i = 0; i < hashes.length; i++) {
-            if (hash > hashes[i].hash) {
+            if (hash < hashes[i].hash || i === hashes.length - 1) {
                 // This is the primary server and replica indicates the replica number that was last used
-                let replica = hashes[(i+1) % hashes.length].replica;
+                let replica = hashes[i].replica;
                 let sent = false;
                 // Traverse the replicas starting from the last used replica until one that is connected is found
                 for (let j = 0; j < serverConf.num_replicas && !sent; j++) {
