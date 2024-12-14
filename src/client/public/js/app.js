@@ -292,31 +292,40 @@ async function downloadListHandler() {
       let emptyMsg = document.querySelector('#no-list');
       if (emptyMsg) emptyMsg.remove();
 
-      /* let newListItem = document.createElement('li');
-      newListItem.className = 'shopping-list list-item';
-      newListItem.setAttribute('data-id', response.id);
+      let listItems = document.querySelectorAll('.shopping-list');
+      let listIds = Array.from(listItems).map(item => item.getAttribute('data-id'));
 
-      const eyeSvg = await getSvg('../img/eye.svg');
-      const copySvg = await getSvg('../img/copy.svg');
-      const trashSvg = await getSvg('../img/trash.svg');
+      if (listIds.includes(response.id)) infoSwal("Info", "List already exists!");
+      else {
+        /* let newListItem = document.createElement('li');
+        newListItem.className = 'shopping-list list-item';
+        newListItem.setAttribute('data-id', response.id);
 
-      newListItem.innerHTML = `
-        <p>${response.title}</p>
-        <div class="action-btns">
-            <a href="${response.id}" class="icon view-btn" title="View list">${eyeSvg}</a>
-            <button class="icon copy-btn" title="Copy list id">${copySvg}</button>
-            <button class="icon del-btn" title="Delete list">${trashSvg}</button>
-        </div>
-      `;
+        const eyeSvg = await getSvg('../img/eye.svg');
+        const copySvg = await getSvg('../img/copy.svg');
+        const trashSvg = await getSvg('../img/trash.svg');
 
-      let ulElement = document.querySelector('#lists ul');
-      ulElement.appendChild(newListItem);
+        newListItem.innerHTML = `
+          <p>${response.title}</p>
+          <div class="action-btns">
+              <a href="${response.id}" class="icon view-btn" title="View list">${eyeSvg}</a>
+              <button class="icon copy-btn" title="Copy list id">${copySvg}</button>
+              <button class="icon del-btn" title="Delete list">${trashSvg}</button>
+          </div>
+        `;
 
-      addEventListeners(); */
+        let ulElement = document.querySelector('#lists ul');
+        ulElement.appendChild(newListItem);
+
+        addEventListeners(); */
+      }
+    }
+    else {
+      errorSwal("Error", "There is no internet connection!");
     }
   }
   else {
-    console.error("Error while creating list");
+    errorSwal("Error", "There was an error while downloading the list");
   }
 }
 
@@ -418,6 +427,26 @@ function decreaseItemQuantityHadler() {
   else {
     console.error("Error while increasing item quantity");
   }
+}
+
+function infoSwal (title, text){
+  Swal.fire({
+    title: title,
+    text: text,
+    icon: "info",
+    confirmButtonColor: "#C2C2C2",
+    confirmButtonText: "Ok"
+  })
+}
+
+function errorSwal (title, text){
+  Swal.fire({
+    title: title,
+    text: text,
+    icon: "error",
+    confirmButtonColor: "#C2C2C2",
+    confirmButtonText: "Ok"
+  })
 }
 
 addEventListeners();

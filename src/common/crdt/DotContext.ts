@@ -53,6 +53,11 @@ class DotContext {
         }, 0);
     }
 
+    contains(dot: Dot): boolean {
+        const currentDot = this.dots.get(dot.id);
+        return currentDot ? currentDot.version >= dot.version : false
+    }
+
     toString(): string {
         return "{" + Array.from(this.dots.entries())
             .map(([id, { version, tombstone }]) => `${id}:${version}${tombstone ? ' (tombstone)' : ''}`)

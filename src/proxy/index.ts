@@ -38,18 +38,22 @@ async function handleFrontend() {
         const hash = createHash('sha256').update(rest[1]).digest('hex');
 
         for (let i = 0; i < hashes.length; i++) {
-            if (hash > hashes[i].hash) {
+            if (hash < hashes[i].hash || i === hashes.length - 1) {
+                // If the hash is greater than the last hash, the primary server is the first server
+                if (hash >= hashes[i].hash) {
+                    i = 0;
+                }
                 // This is the primary server and replica indicates the replica number that was last used
-                let replica = hashes[(i+1) % hashes.length].replica;
+                let replica = hashes[i].replica;
                 let sent = false;
                 // Traverse the replicas starting from the last used replica until one that is connected is found
                 for (let j = 0; j < serverConf.num_replicas && !sent; j++) {
-                    const socket = hashes[(i + 1 + replica) % hashes.length].socket;
+                    const socket = hashes[(i + replica) % hashes.length].socket;
                     replica = (replica + 1) % serverConf.num_replicas;
 
                     if (socket !== undefined) {
                         // Store the last used replica number in the primary server
-                        hashes[(i+1) % hashes.length].replica = replica;
+                        hashes[i].replica = replica;
 
                         sent = true;
                         backend.send([socket, null, 'request', sender, ...rest]);
@@ -57,7 +61,7 @@ async function handleFrontend() {
                 }
 
                 if (!sent) {
-                    frontend.send([sender, null, 'error', 'no servers available']);
+                    frontend.send([sender, 'error', 'no servers available']);
                 }
                 break;
             }
@@ -88,7 +92,13 @@ async function handleBackend() {
             case 'reply':
                 const client = rest[0];
                 if (client.length !== 0)
-                    frontend.send([client, null, ...rest.slice(1)]);
+                    frontend.send([client, 'reply', ...rest.slice(1)]);
+
+                break;
+            case 'error':
+                const clientError = rest[0];
+                if (clientError.length !== 0)
+                    frontend.send([clientError, 'error', ...rest.slice(1)]);
 
                 break;
             case 'disconnect':
@@ -122,7 +132,11 @@ function addNode(port: number) {
         return;
     }
 
-    let socket = portStandby.splice(portStandby.findIndex(p => p.port === port), 1)[0]?.socket;
+    let socket = undefined;
+    let idx = portStandby.findIndex(p => p.port === port);
+    if (idx !== -1) {
+        socket = portStandby.splice(idx, 1)[0].socket;
+    }
 
     portHashes.set(port, { hashes: [] });
     for (let i = 0; i < serverConf.num_replicas; i++) {
@@ -132,7 +146,8 @@ function addNode(port: number) {
             replica: 0
         };
         // insert hash preserving the order
-        hashes.splice(hashes.findIndex(h => h.hash > hash.hash), 0, hash);
+        idx = hashes.findIndex(h => h.hash > hash.hash);
+        hashes.splice(idx === -1 ? hashes.length : idx, 0, hash);
         portHashes.get(port)?.hashes.push(hash.hash);
     }
 
