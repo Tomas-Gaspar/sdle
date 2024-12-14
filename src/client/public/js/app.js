@@ -14,6 +14,31 @@ function sendAjaxRequest(method, url, data, handler) {
   request.addEventListener('load', handler);
   request.send(encodeForAjax(data));
 }
+
+function isListPage() {
+  return !!document.getElementById('is-list-page');
+}
+
+function logIfOnListPage() {
+  setInterval(() => {
+    if (isListPage()) {
+      let listId = document.getElementById('lists').getAttribute('data-id');
+      sendAjaxRequest('get', '/api/list', {"listId": listId}, updatedListHandler);
+    }
+  }, 1000);
+}
+
+function updatedListHandler() {
+  console.log(this.status);
+  if (this.status == 200) {
+    const response = JSON.parse(this.response);
+    
+    console.log(response);
+  } else {
+    console.error("Error while updating list");
+  }
+}
+
   
 function addEventListeners() {
 
@@ -350,4 +375,7 @@ function createListHandler() {
     }
   }
 
-addEventListeners();
+document.addEventListener('DOMContentLoaded', () => {
+  addEventListeners();
+  logIfOnListPage();
+});
