@@ -44,12 +44,12 @@ async function handleFrontend() {
                 let sent = false;
                 // Traverse the replicas starting from the last used replica until one that is connected is found
                 for (let j = 0; j < serverConf.num_replicas && !sent; j++) {
-                    const socket = hashes[(i + 1 + replica) % hashes.length].socket;
+                    const socket = hashes[(i + replica) % hashes.length].socket;
                     replica = (replica + 1) % serverConf.num_replicas;
 
                     if (socket !== undefined) {
                         // Store the last used replica number in the primary server
-                        hashes[(i+1) % hashes.length].replica = replica;
+                        hashes[i].replica = replica;
 
                         sent = true;
                         backend.send([socket, null, 'request', sender, ...rest]);

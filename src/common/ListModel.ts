@@ -205,6 +205,7 @@ class ListModel {
             }
             return acc;
         }, [] as item[]);
+        items.sort((a, b) => a.name.localeCompare(b.name));
 
         return {
             id: undefined,

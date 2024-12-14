@@ -96,10 +96,17 @@ class AWORStructure<V extends AWORVal> implements CRDT {
             if (line === '') continue;
 
             const [key, rest] = line.split(': ');
-            const dotStr = rest.split('(')[0];
+            let dotStr, crdtStr;
+            if (rest.includes('(tombstone)')) {
+                dotStr = rest.split(' (tombstone)')[0] + ' (tombstone)';
+                crdtStr = rest.split(' (tombstone)(').slice(1)[0].slice(0, -1);
+            } else {
+                dotStr = rest.split('(')[0];
+                crdtStr = rest.split('(').slice(1)[0];
+            }
+            
             const dot = Dot.fromString(dotStr);
 
-            let crdtStr = rest.split('(').slice(1)[0];
             let crdt = undefined;
             if (crdtStr === 'CC') {
                 crdtStr += '(\n';

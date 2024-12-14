@@ -24,6 +24,6 @@ INSERT INTO List (id, title, context) VALUES
 ('123e4567-e89b-12d3-a456-426614174000', 'Groceries', '{A:1}');
 
 INSERT INTO Item (dot, name, context_pos, context_neg, list_id) VALUES 
-('A:1', 'Milk', '', '', '123e4567-e89b-12d3-a456-426614174000'),
-('B:2', 'Bread', '', '', '123e4567-e89b-12d3-a456-426614174000'),
-('A:2', 'Eggs', '', '', '123e4567-e89b-12d3-a456-426614174000');
+('A:1', 'Milk', 'AWORStructure:(' || char(10) || '{}' || char(10) || char(10) || ')', 'AWORStructure:(' || char(10) || '{}' || char(10) || char(10) || ')', '123e4567-e89b-12d3-a456-426614174000'),
+('B:2', 'Bread', 'AWORStructure:(' || char(10) || '{}' || char(10) || char(10) || ')', 'AWORStructure:(' || char(10) || '{}' || char(10) || char(10) || ')', '123e4567-e89b-12d3-a456-426614174000'),
+('A:2', 'Eggs', 'AWORStructure:(' || char(10) || '{}' || char(10) || char(10) || ')', 'AWORStructure:(' || char(10) || '{}' || char(10) || char(10) || ')', '123e4567-e89b-12d3-a456-426614174000');
