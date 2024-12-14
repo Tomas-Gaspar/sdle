@@ -106,13 +106,13 @@ function map1() {
     counter2.inc();
     counter2.dec();
 
-    map1.put('apple', [counter1]);
-    map1.put('banana', [counter2]);
+    map1.put('apple', counter1);
+    map1.put('banana', counter2);
 
     const counter3 = new CausalCounter('C');
     counter3.inc();
 
-    map2.put('banana', [counter3]);
+    map2.put('banana', counter3);
     map2.remove('banana');
 
     console.log(map1.toString());
@@ -136,8 +136,8 @@ function map2() {
     counter2.inc();
     counter2.dec();
 
-    map3.put('apple', [counter1]);
-    map3.put('banana', [counter2]);
+    map3.put('apple', counter1);
+    map3.put('banana', counter2);
 
     const counter3 = new CausalCounter('C');
     const counter4 = new CausalCounter('D');
@@ -146,8 +146,8 @@ function map2() {
     counter4.inc();
     counter4.inc();
 
-    map4.put('apple', [counter3]);
-    map4.put('banana', [counter4]);
+    map4.put('apple', counter3);
+    map4.put('banana', counter4);
 
     console.log(map3.toString());
     console.log(map4.toString());
@@ -167,13 +167,13 @@ function map3() {
 
     counter1.inc();
 
-    map5.put('apple', [counter1]);
+    map5.put('apple', counter1);
 
     const counter2 = new CausalCounter('B');
 
     counter2.inc();
 
-    map6.put('apple', [counter2]);
+    map6.put('apple', counter2);
 
     console.log(map5.toString());
     console.log(map6.toString());

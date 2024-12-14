@@ -2,6 +2,7 @@ import * as zmq from 'zeromq';
 import { createHash } from 'crypto';
 import { getDatabaseConnection } from '../common/database/init';
 import { ListModel } from '../common/ListModel';
+import { AWORStructure } from '../common/crdt/AWORStructure';
 
 if (process.argv.length < 3 || isNaN(parseInt(process.argv[2]))) {
     console.error('Usage: node index.js <port>');
@@ -22,7 +23,7 @@ const hashesPort: { hash: string, port: number}[] = [];
 const socket = new zmq.Request();
 
 // To be used for gossiping
-const xpub = new zmq.XPublisher();
+const xpub = new zmq.XPublisher({ verbosity: "allSubs" });
 const sub = new zmq.Subscriber();
 
 const pubQueue:any[] = [];
@@ -57,8 +58,11 @@ async function handeRequests() {
                             if (idx < 0) {
                                 idx = hashesPort.length + idx;
                             }
-                            portsSubscribe.add(hashesPort[idx].port);
-                            hashesSubscribe.add(hashesPort[idx].hash);
+
+                            if (hashesPort[idx].port !== parseInt(process.argv[2])) {
+                                portsSubscribe.add(hashesPort[idx].port);
+                                hashesSubscribe.add(hashesPort[idx].hash);
+                            }
                         }
                     }
                 }
@@ -91,26 +95,31 @@ function processRequest(req: Buffer[]) {
         // [ 'request', 'get', 'list_id' ]
         case 'get':
             listModel.getList(req[2].toString()).then(list => {
-                socket.send(['reply', client, JSON.stringify(list)]);
+                socket.send(['reply', client, req[2].toString(), list.title, list.crdt.toString()]);
             }).catch(err => {
                 socket.send(['error', client, err.message]);
             });
             break;
-        // [ 'request', 'put', 'list_id', 'list' ]
+        // [ 'request', 'put', 'list_id', 'list_title', 'list' ]
         case 'put':
             listModel.getList(req[2].toString()).then(list => {
-                list.crdt.join(JSON.parse(req[3].toString()));
+                list.crdt.join(AWORStructure.fromString(req[4].toString()));
                 listModel.saveList(req[2].toString(), list.title, list.crdt).then(() => {
-                    const messageList = JSON.stringify(list);
                     const hash = createHash('sha256').update(req[2]).digest('hex');
+                    const ringHash = (hashesPort.find(h => h.hash > hash) || hashesPort[0])
+                    if (!ringHash) {
+                        return
+                    }
+
                     if (pubQueue.length === 50)
                         pubQueue.shift();
 
-                    const message = [hash, 'update', req[2], messageList];
+                    const messageList = [req[2].toString(), list.title, list.crdt.toString()];
+                    const message = [ringHash.hash, 'update', ...messageList];
                     pubQueue.push(message);
-
+                    
                     xpub.send(message);
-                    socket.send(['reply', client, messageList]);
+                    socket.send(['reply', client, ...messageList]);
                 }).catch(err => {
                     socket.send(['error', client, err.message]);
                 });
@@ -137,30 +146,28 @@ async function handlePublisher() {
 }
 
 async function handleSubscriptions() {
-    for await (const [header, ...req] of sub) {
-        switch (header.toString()) {
-            // [ 'update', 'list_id', 'list' ]
-            case 'update':
-                listModel.getList(req[1].toString()).then(list => {
-                    list.crdt.join(JSON.parse(req[2].toString()));
-                    listModel.saveList(req[1].toString(), list.title, list.crdt);
+    for await (const [topic, header, ...req] of sub) {
+        if (topic.toString() === 'ring_update') {
+            if (header.toString() === 'add') {
+                const port = parseInt(req[0].toString());
+                if (port === parseInt(process.argv[2])) {
+                    // everything was done in the ready message
+                    continue;
+                }
+                addServer(port);
+            }
+            else if (header.toString() === 'remove') {
+                const port = parseInt(req[0].toString());
+                removeServer(port);
+            }
+        } else {
+            // [ 'update', 'list_id', 'list_title', 'list' ]
+            if (header.toString() === 'update') {
+                listModel.getList(req[0].toString()).then(list => {
+                    list.crdt.join(AWORStructure.fromString(req[2].toString()));
+                    listModel.saveList(req[0].toString(), req[1].toString(), list.crdt);
                 });
-            case 'ring_update':
-                if (req[0].toString() === 'add') {
-                    const port = parseInt(req[1].toString());
-                    if (port === parseInt(process.argv[2])) {
-                        // everything was done in the ready message
-                        break;
-                    }
-                    addServer(port);
-                }
-                else if (req[0].toString() === 'remove') {
-                    const port = parseInt(req[1].toString());
-                    removeServer(port);
-                }
-                break;
-            default:
-                break;
+            }
         }
     }
 }
@@ -176,10 +183,14 @@ function addServer(port: number) {
     newHashes.sort((a, b) => a.hash < b.hash ? -1 : 1);
 
     for (let i = 0; i < hashesPort.length && newHashes.length > 0; i++) {
-        if (newHashes[0].hash > hashesPort[i].hash) {
+        if (newHashes[0].hash < hashesPort[i].hash || i == hashesPort.length - 1) {
+            if (newHashes[0].hash >= hashesPort[i].hash) {
+                i = hashesPort.length - 1;
+            }
+
             const newHash = newHashes.shift();
             if (newHash) {
-                hashesPort.splice(i++, 0, newHash);
+                hashesPort.splice(i, 0, newHash);
                 if (!portsSubscribe.has(newHash.port)) {
                     sub.connect(`tcp://127.0.0.1:${newHash.port}`);
                     portsSubscribe.add(newHash.port);
@@ -190,16 +201,22 @@ function addServer(port: number) {
                 const idx = (i + j) % hashesPort.length;
 
                 if (hashesPort[idx].port === parseInt(process.argv[2])) {
-                    // Subscribe to the new node
-                    sub.subscribe(hashesPort[i].hash);
-                    hashesSubscribe.add(hashesPort[i].hash);
+                    if (!hashesSubscribe.has(hashesPort[i].hash)) {
+                        // Subscribe to the new node
+                        sub.subscribe(hashesPort[i].hash);
+                        hashesSubscribe.add(hashesPort[i].hash);
+                    }
 
-                    let replicaIdx = i - j;
+                    let replicaIdx = i - serverConf.num_replicas + j - 1;
                     if (replicaIdx < 0) {
                         replicaIdx = hashesPort.length + replicaIdx;
                     }
-                    sub.unsubscribe(hashesPort[replicaIdx].hash);
-                    hashesSubscribe.delete(hashesPort[replicaIdx].hash);
+
+                    if (hashesSubscribe.has(hashesPort[replicaIdx].hash)) {
+                        // Unsubscribe because we will no longer be responsible for the replica
+                        sub.unsubscribe(hashesPort[replicaIdx].hash);
+                        hashesSubscribe.delete(hashesPort[replicaIdx].hash);
+                    }
                 }
             }
         }
@@ -239,9 +256,11 @@ function removeServer(port: number) {
                 }
 
                 if (hashesPort[idx].port === port) {
-                    // Unsubscribe from the removed node
-                    sub.unsubscribe(hashesPort[idx].hash);
-                    hashesSubscribe.delete(hashesPort[idx].hash);
+                    if (hashesSubscribe.has(hashesPort[idx].hash)) {
+                        // Unsubscribe from the removed node
+                        sub.unsubscribe(hashesPort[idx].hash);
+                        hashesSubscribe.delete(hashesPort[idx].hash);
+                    }
 
                     const newReplica = idx === 0 ? hashesPort.length - 1 : idx - 1;
                     newPorts.add(hashesPort[newReplica].port);
@@ -256,14 +275,24 @@ function removeServer(port: number) {
     for (const idx of indexes)
         hashesPort.splice(idx, 1);
 
-    for (const port of newPorts)
-        sub.connect(`tcp://127.0.0.1:${port}`);
+    for (const port of newPorts) {
+        if (!portsSubscribe.has(port)) {
+            sub.connect(`tcp://127.0.0.1:${port}`);
+            portsSubscribe.add(port);
+        }
+    }
 
-    for (const hash of newHashes)
-        sub.subscribe(hash);
+    for (const hash of newHashes) {
+        if (!hashesSubscribe.has(hash)) {
+            sub.subscribe(hash);
+            hashesSubscribe.add(hash);
+        }
+    }
 
-    portsSubscribe.delete(port);
-    sub.disconnect(`tcp://127.0.0.1:${port}`);
+    if (portsSubscribe.has(port)) {
+        portsSubscribe.delete(port);
+        sub.disconnect(`tcp://127.0.0.1:${port}`);
+    }
 }
 
 async function start() {

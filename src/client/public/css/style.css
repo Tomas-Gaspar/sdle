@@ -49,6 +49,19 @@ button {
     margin: 0;
 }
 
+svg {
+    color: var(--dark-green);
+    transition: .3s;
+    width: 1.3em;
+    height: 1.3em;
+    padding: 0 .5em;
+}
+
+svg:hover {
+    cursor: pointer;
+    color: var(--orange);
+}
+
 
 /* HOME */
   

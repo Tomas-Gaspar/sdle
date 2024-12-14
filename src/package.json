@@ -7,19 +7,20 @@
         "proxy"
     ],
     "dependencies": {
+        "async-mutex": "^0.5.0",
         "crypto": "^1.0.1",
-        "zeromq": "^6.1.2",
-        "sqlite3": "^5.1.7",
         "express": "^4.21.1",
         "express-handlebars": "^8.0.1",
-        "uuid": "^11.0.3"
+        "sqlite3": "^5.1.7",
+        "uuid": "^11.0.3",
+        "zeromq": "^6.1.2"
     },
     "devDependencies": {
         "@types/express": "^5.0.0",
         "@types/node": "^22.9.0",
         "@types/sqlite3": "^3.1.11",
+        "nodemon": "^3.1.7",
         "ts-node": "^10.9.2",
-        "typescript": "^5.6.3",
-        "nodemon": "^3.1.7"
+        "typescript": "^5.6.3"
     }
 }
