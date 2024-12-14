@@ -39,6 +39,10 @@ async function handleFrontend() {
 
         for (let i = 0; i < hashes.length; i++) {
             if (hash < hashes[i].hash || i === hashes.length - 1) {
+                // If the hash is greater than the last hash, the primary server is the first server
+                if (hash >= hashes[i].hash) {
+                    i = 0;
+                }
                 // This is the primary server and replica indicates the replica number that was last used
                 let replica = hashes[i].replica;
                 let sent = false;
@@ -128,7 +132,11 @@ function addNode(port: number) {
         return;
     }
 
-    let socket = portStandby.splice(portStandby.findIndex(p => p.port === port), 1)[0]?.socket;
+    let socket = undefined;
+    let idx = portStandby.findIndex(p => p.port === port);
+    if (idx !== -1) {
+        socket = portStandby.splice(idx, 1)[0].socket;
+    }
 
     portHashes.set(port, { hashes: [] });
     for (let i = 0; i < serverConf.num_replicas; i++) {
@@ -138,7 +146,8 @@ function addNode(port: number) {
             replica: 0
         };
         // insert hash preserving the order
-        hashes.splice(hashes.findIndex(h => h.hash > hash.hash), 0, hash);
+        idx = hashes.findIndex(h => h.hash > hash.hash);
+        hashes.splice(idx === -1 ? hashes.length : idx, 0, hash);
         portHashes.get(port)?.hashes.push(hash.hash);
     }
 

@@ -106,7 +106,7 @@ function processRequest(req: Buffer[]) {
                 list.crdt.join(AWORStructure.fromString(req[4].toString()));
                 listModel.saveList(req[2].toString(), list.title, list.crdt).then(() => {
                     const hash = createHash('sha256').update(req[2]).digest('hex');
-                    const ringHash = (hashesPort.find(h => h.hash > hash) || hashesPort.at(-1))
+                    const ringHash = (hashesPort.find(h => h.hash > hash) || hashesPort[0])
                     if (!ringHash) {
                         return
                     }
@@ -149,7 +149,7 @@ async function handleSubscriptions() {
     for await (const [topic, header, ...req] of sub) {
         if (topic.toString() === 'ring_update') {
             if (header.toString() === 'add') {
-                const port = parseInt(req[1].toString());
+                const port = parseInt(req[0].toString());
                 if (port === parseInt(process.argv[2])) {
                     // everything was done in the ready message
                     continue;
@@ -157,7 +157,7 @@ async function handleSubscriptions() {
                 addServer(port);
             }
             else if (header.toString() === 'remove') {
-                const port = parseInt(req[1].toString());
+                const port = parseInt(req[0].toString());
                 removeServer(port);
             }
         } else {
@@ -183,10 +183,14 @@ function addServer(port: number) {
     newHashes.sort((a, b) => a.hash < b.hash ? -1 : 1);
 
     for (let i = 0; i < hashesPort.length && newHashes.length > 0; i++) {
-        if (newHashes[0].hash > hashesPort[i].hash) {
+        if (newHashes[0].hash < hashesPort[i].hash || i == hashesPort.length - 1) {
+            if (newHashes[0].hash >= hashesPort[i].hash) {
+                i = hashesPort.length - 1;
+            }
+
             const newHash = newHashes.shift();
             if (newHash) {
-                hashesPort.splice(i++, 0, newHash);
+                hashesPort.splice(i, 0, newHash);
                 if (!portsSubscribe.has(newHash.port)) {
                     sub.connect(`tcp://127.0.0.1:${newHash.port}`);
                     portsSubscribe.add(newHash.port);
@@ -197,16 +201,22 @@ function addServer(port: number) {
                 const idx = (i + j) % hashesPort.length;
 
                 if (hashesPort[idx].port === parseInt(process.argv[2])) {
-                    // Subscribe to the new node
-                    sub.subscribe(hashesPort[i].hash);
-                    hashesSubscribe.add(hashesPort[i].hash);
+                    if (!hashesSubscribe.has(hashesPort[i].hash)) {
+                        // Subscribe to the new node
+                        sub.subscribe(hashesPort[i].hash);
+                        hashesSubscribe.add(hashesPort[i].hash);
+                    }
 
-                    let replicaIdx = i - j;
+                    let replicaIdx = i - serverConf.num_replicas + j - 1;
                     if (replicaIdx < 0) {
                         replicaIdx = hashesPort.length + replicaIdx;
                     }
-                    sub.unsubscribe(hashesPort[replicaIdx].hash);
-                    hashesSubscribe.delete(hashesPort[replicaIdx].hash);
+
+                    if (hashesSubscribe.has(hashesPort[replicaIdx].hash)) {
+                        // Unsubscribe because we will no longer be responsible for the replica
+                        sub.unsubscribe(hashesPort[replicaIdx].hash);
+                        hashesSubscribe.delete(hashesPort[replicaIdx].hash);
+                    }
                 }
             }
         }
@@ -246,9 +256,11 @@ function removeServer(port: number) {
                 }
 
                 if (hashesPort[idx].port === port) {
-                    // Unsubscribe from the removed node
-                    sub.unsubscribe(hashesPort[idx].hash);
-                    hashesSubscribe.delete(hashesPort[idx].hash);
+                    if (hashesSubscribe.has(hashesPort[idx].hash)) {
+                        // Unsubscribe from the removed node
+                        sub.unsubscribe(hashesPort[idx].hash);
+                        hashesSubscribe.delete(hashesPort[idx].hash);
+                    }
 
                     const newReplica = idx === 0 ? hashesPort.length - 1 : idx - 1;
                     newPorts.add(hashesPort[newReplica].port);
@@ -263,11 +275,19 @@ function removeServer(port: number) {
     for (const idx of indexes)
         hashesPort.splice(idx, 1);
 
-    for (const port of newPorts)
-        sub.connect(`tcp://127.0.0.1:${port}`);
+    for (const port of newPorts) {
+        if (!portsSubscribe.has(port)) {
+            sub.connect(`tcp://127.0.0.1:${port}`);
+            portsSubscribe.add(port);
+        }
+    }
 
-    for (const hash of newHashes)
-        sub.subscribe(hash);
+    for (const hash of newHashes) {
+        if (!hashesSubscribe.has(hash)) {
+            sub.subscribe(hash);
+            hashesSubscribe.add(hash);
+        }
+    }
 
     if (portsSubscribe.has(port)) {
         portsSubscribe.delete(port);
