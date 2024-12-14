@@ -21,7 +21,7 @@ CREATE TABLE Item(
 );
 
 INSERT INTO List (id, title, context) VALUES 
-('123e4567-e89b-12d3-a456-426614174000', 'Groceries', '{A:1}');
+('123e4567-e89b-12d3-a456-426614174000', 'Groceries', '{A:2;B:2}');
 
 INSERT INTO Item (dot, name, context_pos, context_neg, list_id) VALUES 
 ('A:1', 'Milk', 'AWORStructure:(' || char(10) || '{}' || char(10) || char(10) || ')', 'AWORStructure:(' || char(10) || '{}' || char(10) || char(10) || ')', '123e4567-e89b-12d3-a456-426614174000'),

@@ -59,14 +59,24 @@ class AWORStructure<V extends AWORVal> implements CRDT {
         other.elements.forEach((value, key) => {
             const currentDot = this.elements.get(key)?.dot;
 
-            if (!currentDot || value.dot.version > currentDot.version) {
+            if (!currentDot || (value.dot.id === currentDot.id && value.dot.version > currentDot.version)) {
                 this.elements.set(key, value);
                 this.context.updateDot(value.dot);
-            } else if (value.dot.version === currentDot.version) {
-                // If current dot is a tombstone and the other dot is not, replace because add wins
-                if (currentDot.tombstone && !value.dot.tombstone) {
-                    this.elements.set(key, value);
-                    this.context.updateDot(value.dot);
+            } else  {
+                if (value.dot.id !== currentDot.id) {
+                    if (this.context.contains(value.dot)) {
+                        // do nothing
+                    }
+                    else if (other.context.contains(currentDot)) {
+                        this.elements.set(key, value);
+                        this.context.updateDot(value.dot);
+                    } else {
+                        // Concurrent operations -> add wins
+                        if (currentDot.tombstone && !value.dot.tombstone) {
+                            this.elements.set(key, value);
+                            this.context.updateDot(value.dot);
+                        }
+                    }
                 }
             }
 
