@@ -43,7 +43,7 @@ setInterval(async () => {
         console.log("INTERACTOR: Requesting page from the server");
         dealer.send([null, 'get', currState.page]);
     }
-}, 5000);
+}, 2500);
 
 const apiRoutes = (listModel: ListModel) => {
     const router = Router();
