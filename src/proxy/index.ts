@@ -120,6 +120,11 @@ async function start() {
     await backend.bind('tcp://127.0.0.1:5555');
     await pub.bind('tcp://127.0.0.1:5554');
 
+    setTimeout(() => {
+        // Make sure the subscribers have time to connect/reconnect
+        pub.send(['proxy_up']);
+    }, 500);
+
     await Promise.all([
         handleFrontend(), 
         handleBackend()

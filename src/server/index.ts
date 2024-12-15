@@ -20,7 +20,7 @@ let serverConf
     };
 const hashesPort: { hash: string, port: number}[] = [];
 
-const socket = new zmq.Request();
+let socket = new zmq.Request();
 
 // To be used for gossiping
 const xpub = new zmq.XPublisher({ verbosity: "allSubs" });
@@ -31,8 +31,30 @@ const pubQueue:any[] = [];
 const portsSubscribe = new Set<number>();
 const hashesSubscribe = new Set<string>();
 
+let reconnect = true;
+
 async function handeRequests() {
-    for await (const [header, ...req] of socket) {
+    while (true) {
+        if (reconnect) {
+            console.log('(re)connecting to proxy');
+            socket = new zmq.Request({receiveTimeout: 2500})
+            socket.connect('tcp://127.0.0.1:5555');
+            await socket.send(['ready', process.argv[2]]);
+            reconnect = false;
+        }
+
+        const result = await socket.receive().catch((err) => {
+            console.log('timeout');
+            if (err.code !== 'EAGAIN') {
+                throw err;
+            }
+        });
+        if (!result) {
+            continue;
+        }
+        const [header, ...req] = result;
+
+
         switch (header.toString()) {
             case 'ready':
                 serverConf = {
@@ -74,6 +96,7 @@ async function handeRequests() {
                 for (const hash of hashesSubscribe)
                     sub.subscribe(hash);
                 sub.subscribe('ring_update');
+                sub.subscribe('proxy_up');
 
                 socket.send(['reply', null]);
                 break;
@@ -160,7 +183,10 @@ async function handleSubscriptions() {
                 const port = parseInt(req[0].toString());
                 removeServer(port);
             }
-        } else {
+        } else if (topic.toString() === 'proxy_up') {
+            reconnect = true;
+        }
+        else {
             // [ 'update', 'list_id', 'list_title', 'list' ]
             if (header.toString() === 'update') {
                 listModel.getList(req[0].toString()).then(list => {
@@ -227,6 +253,7 @@ function removeServer(port: number) {
     if (port === parseInt(process.argv[2])) {
         // Unsubscribe and disconnect from all nodes
         sub.unsubscribe('ring_update');
+        sub.unsubscribe('proxy_up');
         for (const hash of hashesSubscribe)
             sub.unsubscribe(hash);
 
@@ -297,8 +324,6 @@ function removeServer(port: number) {
 
 async function start() {
     await xpub.bind(`tcp://127.0.0.1:${process.argv[2]}`);
-    socket.connect('tcp://127.0.0.1:5555');
-    socket.send(['ready', process.argv[2]]);
 
     await Promise.all([
         handeRequests(),
