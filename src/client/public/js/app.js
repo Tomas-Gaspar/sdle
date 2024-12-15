@@ -54,32 +54,33 @@ function updatedListHandler() {
       let deletedItem = document.querySelector(`li[data-id="${deletedValues[i]}"]`);
       deletedItem.remove();
     }
-  }
 
-  for (let i = 0; i < newItems.length; i++) {
-    let newItem = newItems[i]; 
-      
-    if (oldValues.includes(newItem.name)) { // Updating existing items
-      let item = document.querySelector(`li[data-id="${newItem.name}"]`);
+    for (let i = 0; i < newItems.length; i++) {
+      let newItem = newItems[i]; 
+        
+      if (oldValues.includes(newItem.name)) { // Updating existing items
+        let item = document.querySelector(`li[data-id="${newItem.name}"]`);
 
-      const quantity = item.querySelector('.quantity p');
-      quantity.textContent = newItem.quantity;
+        const quantity = item.querySelector('.quantity p');
+        quantity.textContent = newItem.quantity;
 
-      if (newItem.quantity > 0) {
-        item.style.backgroundColor = '#FFFFFF';
-        item.querySelector('p').style.textDecoration = 'none';
+        if (newItem.quantity > 0) {
+          item.style.backgroundColor = '#FFFFFF';
+          item.querySelector('p').style.textDecoration = 'none';
+        }
+        else {
+          item.style.backgroundColor = '#F5F5F5';
+          item.querySelector('p').style.textDecoration = 'line-through';
+        }
       }
-      else {
-        item.style.backgroundColor = '#F5F5F5';
-        item.querySelector('p').style.textDecoration = 'line-through';
-      }
+      else { // Adding new items
+        createNewItemElement(newItem['name'], newItem['quantity']).then(itemHTML => {
+          itemsLists.appendChild(itemHTML);
+        });
+
+        addEventListeners();
+      }    
     }
-    else { // Adding new items
-      const itemHTML = createNewItemElement(newItem['name'], newItem['quantity']);
-      itemsLists.appendChild(itemHTML);
-
-      addEventListeners();
-    }    
   }
 }
 
