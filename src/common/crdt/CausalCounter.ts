@@ -29,8 +29,8 @@ class CausalCounter implements CRDT {
     }
 
     join(other: CausalCounter): void {
-        this.pos.join(other.pos);
-        this.neg.join(other.neg);
+        this.pos.join(other.pos, true);
+        this.neg.join(other.neg, true);
 
         const value = this.value();
         if (value < 0)

@@ -107,7 +107,7 @@ async function getSvg(url) {
   
 function addEventListeners() {
   let toggleInternetBtn = document.getElementById('internet-btn');
-  if (toggleInternetBtn) toggleInternetBtn.addEventListener('change', (event) => {toggleInternet(event)});
+  if (toggleInternetBtn) toggleInternetBtn.addEventListener('change', debounce(toggleInternet, 300));
 
   let createListBtn = document.getElementById('create-btn');
   if (createListBtn) createListBtn.addEventListener('click', showCreateList);
@@ -160,6 +160,15 @@ function addEventListeners() {
         i.querySelector('p').style.textDecoration = 'line-through';
       }
   });
+}
+
+let debounceTimeout;
+
+function debounce(func, delay) {
+  return function(...args) {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => func.apply(this, args), delay);
+  };
 }
 
 function toggleInternet(event) {

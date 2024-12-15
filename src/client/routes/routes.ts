@@ -204,7 +204,7 @@ const apiRoutes = (listModel: ListModel) => {
 
     router.post('/internet', async (req, res) => {
         try {
-            const internetStatus = req.body["internet"] == "true" ? true : false;
+            const internetStatus = req.body["internet"] === "true";
 
             if (internetStatus) {
                 console.log("INTERACTOR: Internet ON");

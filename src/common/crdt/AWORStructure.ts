@@ -55,11 +55,11 @@ class AWORStructure<V extends AWORVal> implements CRDT {
         }
     }
 
-    join(other: AWORStructure<V>) {
+    join(other: AWORStructure<V>, counter = false) {
         other.elements.forEach((value, key) => {
             const currentDot = this.elements.get(key)?.dot;
 
-            if (!currentDot || (value.dot.id === currentDot.id && value.dot.version > currentDot.version)) {
+            if (!currentDot || (value.dot.id === currentDot.id && value.dot.version > currentDot.version) || counter) {
                 this.elements.set(key, value);
                 this.context.updateDot(value.dot);
             } else  {
