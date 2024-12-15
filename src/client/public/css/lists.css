@@ -146,6 +146,11 @@ li.shopping-item div.quantity button{
     text-align: center;
 }
 
+#is-list-page {
+    position: fixed;
+    bottom: 0;
+}
+
 @media (max-width: 60em) {
     #lists > img {
         display: none;
