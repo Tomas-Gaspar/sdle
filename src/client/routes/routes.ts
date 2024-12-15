@@ -109,10 +109,10 @@ const apiRoutes = (listModel: ListModel) => {
           const reply = processReply(listModel, await request.receive());
           request.disconnect('tcp://localhost:5556');
 
-            if (typeof reply === 'string') {
-                res.status(400).send();
-                return;
-            }
+          if (typeof reply === 'string') {
+            res.status(400).send();
+            return;
+          }
 
           const list = await listModel.getList(listId);
           res.json({ internet: true, id: listId, title: list.title });

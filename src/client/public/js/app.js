@@ -427,15 +427,15 @@ function downloadList(event) {
 }
 
 async function downloadListHandler() {
+  let input = document.querySelector('input[name="downloadList"]');
+  input.value = '';
+  let inputListItem = input.closest('li');
+  inputListItem.classList.toggle('no-show');
+
   if (this.status == 200) {
     const response = JSON.parse(this.response);
 
     if (response.internet) {
-
-      let input = document.querySelector('input[name="downloadList"]');
-      input.value = '';
-      let inputListItem = input.closest('li');
-      inputListItem.classList.toggle('no-show');
 
       let emptyMsg = document.querySelector('#no-list');
       if (emptyMsg) emptyMsg.remove();
@@ -481,6 +481,9 @@ async function downloadListHandler() {
     else {
       errorSwal("Error", "There is no internet connection!");
     }
+  }
+  else if (this.status == 400) {
+    errorSwal("Error", "This list does not exist!");
   }
   else {
     errorSwal("Error", "There was an error while downloading the list");
