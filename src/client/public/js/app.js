@@ -257,7 +257,17 @@ async function createListHandler() {
     `;
 
     let ulElement = document.querySelector('#lists ul');
-    ulElement.appendChild(newListItem);
+    // inseert new ul preserving id orderdownloadlist
+    let inserted = false;
+    for (let i = 0; i < ulElement.children.length; i++) {
+      if (ulElement.children[i].getAttribute('data-id') > response.id) {
+        ulElement.insertBefore(newListItem, ulElement.children[i]);
+        inserted = true;
+        break;
+      }
+    }
+    if (!inserted)
+      ulElement.appendChild(newListItem);
 
     addEventListeners();
   }
@@ -280,8 +290,6 @@ async function downloadListHandler() {
   if (this.status == 200) {
     const response = JSON.parse(this.response);
 
-    console.log(response);
-
     if (response.internet) {
 
       let input = document.querySelector('input[name="downloadList"]');
@@ -297,7 +305,7 @@ async function downloadListHandler() {
 
       if (listIds.includes(response.id)) infoSwal("Info", "List already exists!");
       else {
-        /* let newListItem = document.createElement('li');
+        let newListItem = document.createElement('li');
         newListItem.className = 'shopping-list list-item';
         newListItem.setAttribute('data-id', response.id);
 
@@ -315,9 +323,19 @@ async function downloadListHandler() {
         `;
 
         let ulElement = document.querySelector('#lists ul');
-        ulElement.appendChild(newListItem);
+        // inseert new ul preserving id orderdownloadlist
+        let inserted = false;
+        for (let i = 0; i < ulElement.children.length; i++) {
+          if (ulElement.children[i].getAttribute('data-id') > response.id) {
+            ulElement.insertBefore(newListItem, ulElement.children[i]);
+            inserted = true;
+            break;
+          }
+        }
+        if (!inserted)
+          ulElement.appendChild(newListItem);
 
-        addEventListeners(); */
+        addEventListeners();
       }
     }
     else {
@@ -340,8 +358,6 @@ function addItem(event) {
 async function addItemHandler() {
   if (this.status == 200) {
     const response = JSON.parse(this.response);
-
-    console.log(response);
 
     let input = document.querySelector('input[name="addItem"]');
     input.value = '';
