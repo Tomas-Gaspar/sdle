@@ -52,7 +52,8 @@ function updatedListHandler() {
     // Removing deleted items
     for (let i = 0; i < deletedValues.length; i++) {
       let deletedItem = document.querySelector(`li[data-id="${deletedValues[i]}"]`);
-      deletedItem.remove();
+      if (deletedItem)
+        deletedItem.remove();
     }
 
     for (let i = 0; i < newItems.length; i++) {
@@ -77,10 +78,25 @@ function updatedListHandler() {
         createNewItemElement(newItem['name'], newItem['quantity']).then(itemHTML => {
           itemsLists.appendChild(itemHTML);
         });
-
-        addEventListeners();
-      }    
+      }
     }
+    let emptyMsg = document.querySelector('#no-item');
+    if (newItems.length === 0) {
+      if (emptyMsg) return;
+
+      let newListItem = document.createElement('li');
+      newListItem.id = 'no-item';
+      newListItem.className = 'list-item';
+      newListItem.innerHTML = `
+        <p>You have yet to add any items to this list!</p>
+      `;
+
+      itemsLists.appendChild(newListItem);
+    }
+    else {
+      if (emptyMsg) emptyMsg.remove();
+    }
+    addEventListeners();
   }
 }
 
