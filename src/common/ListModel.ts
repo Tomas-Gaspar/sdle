@@ -43,7 +43,7 @@ class ListModel {
                 if (err) {
                     return reject(err);
                 }
-                resolve(rows.map(row => row.id));
+                resolve(rows.map(row => row.id).sort());
             });
         });
     }

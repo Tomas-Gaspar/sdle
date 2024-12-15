@@ -82,17 +82,19 @@ async function handleBackend() {
                         }
                     }
                     backend.send([sender, null, 'ready', serverConf.num_virtual_nodes.toString(), serverConf.num_replicas.toString(), serverConf.ports.join(',')]);
+                    console.log(`Server on port ${port} is ready`);
                 } else {
                     // port is not part of the hashring, if it is later added, the server will be notified
                     backend.send([sender, null, 'standby']);
                     portStandby.push({ port, socket: sender });
+                    console.log(`Server on port ${port} is on standby`);
                 }
 
                 break;
             case 'reply':
                 const client = rest[0];
                 if (client.length !== 0)
-                    frontend.send([client, 'reply', ...rest.slice(1)]);
+                    frontend.send([client, null, 'reply', ...rest.slice(1)]);
 
                 break;
             case 'error':
@@ -119,6 +121,11 @@ async function start() {
     await frontend.bind('tcp://127.0.0.1:5556');
     await backend.bind('tcp://127.0.0.1:5555');
     await pub.bind('tcp://127.0.0.1:5554');
+
+    setTimeout(() => {
+        // Make sure the subscribers have time to connect/reconnect
+        pub.send(['proxy_up']);
+    }, 500);
 
     await Promise.all([
         handleFrontend(), 

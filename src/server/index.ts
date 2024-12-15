@@ -20,7 +20,7 @@ let serverConf
     };
 const hashesPort: { hash: string, port: number}[] = [];
 
-const socket = new zmq.Request();
+let socket = new zmq.Request();
 
 // To be used for gossiping
 const xpub = new zmq.XPublisher({ verbosity: "allSubs" });
@@ -31,8 +31,29 @@ const pubQueue:any[] = [];
 const portsSubscribe = new Set<number>();
 const hashesSubscribe = new Set<string>();
 
+let reconnect = true;
+
 async function handeRequests() {
-    for await (const [header, ...req] of socket) {
+    while (true) {
+        if (reconnect) {
+            console.log('Connecting to proxy');
+            socket = new zmq.Request({receiveTimeout: 5000})
+            socket.connect('tcp://127.0.0.1:5555');
+            await socket.send(['ready', process.argv[2]]);
+            reconnect = false;
+        }
+
+        const result = await socket.receive().catch((err) => {
+            if (err.code !== 'EAGAIN') {
+                throw err;
+            }
+        });
+        if (!result) {
+            continue;
+        }
+        const [header, ...req] = result;
+
+
         switch (header.toString()) {
             case 'ready':
                 serverConf = {
@@ -74,8 +95,10 @@ async function handeRequests() {
                 for (const hash of hashesSubscribe)
                     sub.subscribe(hash);
                 sub.subscribe('ring_update');
+                sub.subscribe('proxy_up');
 
                 socket.send(['reply', null]);
+                console.log('Ready');
                 break;
             case 'request':
                 processRequest(req);
@@ -94,15 +117,19 @@ function processRequest(req: Buffer[]) {
     switch (req[1].toString()) {
         // [ 'request', 'get', 'list_id' ]
         case 'get':
+            console.log(`Get list ${req[2].toString()}`);
             listModel.getList(req[2].toString()).then(list => {
                 socket.send(['reply', client, req[2].toString(), list.title, list.crdt.toString()]);
-            }).catch(err => {
-                socket.send(['error', client, err.message]);
+            }).catch(() => {
+                socket.send(['error', client, 'List not found']);
             });
             break;
         // [ 'request', 'put', 'list_id', 'list_title', 'list' ]
         case 'put':
-            listModel.getList(req[2].toString()).then(list => {
+            console.log(`Put list ${req[2].toString()}`);
+            listModel.getList(req[2].toString()).catch(() => {
+                return Promise.resolve({title: req[3].toString(), crdt: AWORStructure.fromString(req[4].toString())});
+            }).then(list => {
                 list.crdt.join(AWORStructure.fromString(req[4].toString()));
                 listModel.saveList(req[2].toString(), list.title, list.crdt).then(() => {
                     const hash = createHash('sha256').update(req[2]).digest('hex');
@@ -121,23 +148,22 @@ function processRequest(req: Buffer[]) {
                     xpub.send(message);
                     socket.send(['reply', client, ...messageList]);
                 }).catch(err => {
-                    socket.send(['error', client, err.message]);
+                    socket.send(['error', client, 'Error saving list']);
                 });
-            }).catch(err => {
-                socket.send(['error', client, err.message]);
             });
             break;
         default:
             break;
     }
-    
 }
 
 async function handlePublisher() {
     for await (const [event] of xpub) {
         // When there is a new subscription send the last messages that were published (max 50)
         if (event[0] === 0x01) {
-            console.log(`Replaying last ${pubQueue.length} messages`);
+            if (pubQueue.length !== 0)
+                console.log(`Replaying last ${pubQueue.length} messages`);
+
             for (const message of pubQueue) {
                 xpub.send(message)
             }
@@ -149,6 +175,7 @@ async function handleSubscriptions() {
     for await (const [topic, header, ...req] of sub) {
         if (topic.toString() === 'ring_update') {
             if (header.toString() === 'add') {
+                console.log(`Change in ring: Add server ${req[0].toString()}`);
                 const port = parseInt(req[0].toString());
                 if (port === parseInt(process.argv[2])) {
                     // everything was done in the ready message
@@ -157,13 +184,20 @@ async function handleSubscriptions() {
                 addServer(port);
             }
             else if (header.toString() === 'remove') {
+                console.log(`Change in ring: Remove server ${req[0].toString()}`);
                 const port = parseInt(req[0].toString());
                 removeServer(port);
             }
-        } else {
+        } else if (topic.toString() === 'proxy_up') {
+            reconnect = true;
+        }
+        else {
             // [ 'update', 'list_id', 'list_title', 'list' ]
             if (header.toString() === 'update') {
-                listModel.getList(req[0].toString()).then(list => {
+                console.log(`GOSSIP: Update list ${req[0].toString()}`);
+                listModel.getList(req[0].toString()).catch(() => {
+                    return Promise.resolve({title: req[1].toString(), crdt: AWORStructure.fromString(req[2].toString())});
+                }).then(list => {
                     list.crdt.join(AWORStructure.fromString(req[2].toString()));
                     listModel.saveList(req[0].toString(), req[1].toString(), list.crdt);
                 });
@@ -227,6 +261,7 @@ function removeServer(port: number) {
     if (port === parseInt(process.argv[2])) {
         // Unsubscribe and disconnect from all nodes
         sub.unsubscribe('ring_update');
+        sub.unsubscribe('proxy_up');
         for (const hash of hashesSubscribe)
             sub.unsubscribe(hash);
 
@@ -297,8 +332,6 @@ function removeServer(port: number) {
 
 async function start() {
     await xpub.bind(`tcp://127.0.0.1:${process.argv[2]}`);
-    socket.connect('tcp://127.0.0.1:5555');
-    socket.send(['ready', process.argv[2]]);
 
     await Promise.all([
         handeRequests(),
