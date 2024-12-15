@@ -36,15 +36,14 @@ let reconnect = true;
 async function handeRequests() {
     while (true) {
         if (reconnect) {
-            console.log('(re)connecting to proxy');
-            socket = new zmq.Request({receiveTimeout: 2500})
+            console.log('Connecting to proxy');
+            socket = new zmq.Request({receiveTimeout: 5000})
             socket.connect('tcp://127.0.0.1:5555');
             await socket.send(['ready', process.argv[2]]);
             reconnect = false;
         }
 
         const result = await socket.receive().catch((err) => {
-            console.log('timeout');
             if (err.code !== 'EAGAIN') {
                 throw err;
             }
@@ -99,6 +98,7 @@ async function handeRequests() {
                 sub.subscribe('proxy_up');
 
                 socket.send(['reply', null]);
+                console.log('Ready');
                 break;
             case 'request':
                 processRequest(req);
@@ -117,6 +117,7 @@ function processRequest(req: Buffer[]) {
     switch (req[1].toString()) {
         // [ 'request', 'get', 'list_id' ]
         case 'get':
+            console.log(`Get list ${req[2].toString()}`);
             listModel.getList(req[2].toString()).then(list => {
                 socket.send(['reply', client, req[2].toString(), list.title, list.crdt.toString()]);
             }).catch(err => {
@@ -125,6 +126,7 @@ function processRequest(req: Buffer[]) {
             break;
         // [ 'request', 'put', 'list_id', 'list_title', 'list' ]
         case 'put':
+            console.log(`Put list ${req[2].toString()}`);
             listModel.getList(req[2].toString()).then(list => {
                 list.crdt.join(AWORStructure.fromString(req[4].toString()));
                 listModel.saveList(req[2].toString(), list.title, list.crdt).then(() => {
@@ -160,7 +162,9 @@ async function handlePublisher() {
     for await (const [event] of xpub) {
         // When there is a new subscription send the last messages that were published (max 50)
         if (event[0] === 0x01) {
-            console.log(`Replaying last ${pubQueue.length} messages`);
+            if (pubQueue.length !== 0)
+                console.log(`Replaying last ${pubQueue.length} messages`);
+
             for (const message of pubQueue) {
                 xpub.send(message)
             }
@@ -172,6 +176,7 @@ async function handleSubscriptions() {
     for await (const [topic, header, ...req] of sub) {
         if (topic.toString() === 'ring_update') {
             if (header.toString() === 'add') {
+                console.log(`Change in ring: Add server ${req[0].toString()}`);
                 const port = parseInt(req[0].toString());
                 if (port === parseInt(process.argv[2])) {
                     // everything was done in the ready message
@@ -180,6 +185,7 @@ async function handleSubscriptions() {
                 addServer(port);
             }
             else if (header.toString() === 'remove') {
+                console.log(`Change in ring: Remove server ${req[0].toString()}`);
                 const port = parseInt(req[0].toString());
                 removeServer(port);
             }
@@ -189,6 +195,7 @@ async function handleSubscriptions() {
         else {
             // [ 'update', 'list_id', 'list_title', 'list' ]
             if (header.toString() === 'update') {
+                console.log(`GOSSIP: Update list ${req[0].toString()}`);
                 listModel.getList(req[0].toString()).then(list => {
                     list.crdt.join(AWORStructure.fromString(req[2].toString()));
                     listModel.saveList(req[0].toString(), req[1].toString(), list.crdt);
