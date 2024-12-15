@@ -106,7 +106,7 @@ const apiRoutes = (listModel: ListModel) => {
           request.connect('tcp://localhost:5556')
 
           await request.send(['get', listId])
-          const reply = processReply(listModel, await request.receive());
+          const reply = await processReply(listModel, await request.receive());
           request.disconnect('tcp://localhost:5556');
 
           if (typeof reply === 'string') {
