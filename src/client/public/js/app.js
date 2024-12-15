@@ -271,7 +271,7 @@ function downloadList(event) {
   event.preventDefault();
   const listId = document.querySelector('input[name="downloadList"]').value;
   const internetConnection = document.getElementById('internet-btn').querySelector('input').getAttribute('data-id');
-  console.log(internetConnection);
+
   if (listId !== '' && internetConnection === 'true')
     sendAjaxRequest('post', '/api/download', {listId: listId}, downloadListHandler);
 }
@@ -340,6 +340,8 @@ function addItem(event) {
 async function addItemHandler() {
   if (this.status == 200) {
     const response = JSON.parse(this.response);
+
+    console.log(response);
 
     let input = document.querySelector('input[name="addItem"]');
     input.value = '';

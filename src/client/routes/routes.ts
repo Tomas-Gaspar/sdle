@@ -1,16 +1,41 @@
 import { Router } from 'express';
 import { ListModel } from '../../common/ListModel';
 import { v4 as uuidv4 } from 'uuid';
+import { Request } from 'zeromq';
 import { Dealer } from 'zeromq';
 import { AWORStructure } from '../../common/crdt/AWORStructure';
+import { get } from 'http';
 
 const dealer = new Dealer();
 dealer.connect('tcp://localhost:5556');
+
+const dealerReq = new Request();
+dealerReq.connect('tcp://localhost:5555');
+
 
 const currState = {
     internet: true,
     page: undefined as string | undefined
 };
+
+async function getServerList(listModel: ListModel, listID: string) {
+    dealerReq.send([null, 'get', listID]);
+    for await (const reply of dealerReq) {
+        if (reply[0].toString() === 'error') {
+            console.error('Error: ' + reply[1].toString());
+            continue;
+        }
+
+        const id = reply[1].toString();
+        const title = reply[2].toString();
+        const crdt = AWORStructure.fromString(reply[3].toString());
+
+        listModel.getList(id).then((list) => {
+            list.crdt.join(crdt);
+            listModel.saveList(id, title, list.crdt);
+        });
+    }
+}
 
 async function receiveServer(listModel: ListModel) {
     for await (const reply of dealer) {
@@ -71,15 +96,13 @@ const apiRoutes = (listModel: ListModel) => {
     router.post('/download', async (req, res) => {
       try {
         if (currState.internet) {
-
+          console.log("INTERACTOR: Downloading list from the server");
           const listId = req.body.listId;
 
-          /* const list = await listModel.getList(listId);
-          
-          console.log("INTERACTOR: Sending download list to the server");
-          dealer.send([null, 'put', listId, list.title, list.crdt.toString()]); */
+          await getServerList(listModel, listId);
 
-          res.json({ internet: true, id: listId, title: '' });
+          const list = await listModel.getList(listId);
+          res.json({ internet: true, id: listId, title: list.title });
 
         }
         else res.json({internet: false});
