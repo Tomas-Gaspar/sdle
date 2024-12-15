@@ -50,6 +50,26 @@ const apiRoutes = (listModel: ListModel) => {
         }
     });
 
+    router.get('/list', async (req, res) => {
+      try {
+        if (!currState.internet) {
+          res.status(500).send();
+          return;
+        }
+
+        console.log("INTERACTOR: Getting list " + req.query.listId);
+
+        const listId = req.query.listId as string;
+        const list = await listModel.getList(listId);
+
+        res.json({ id: listId, title: list.title, items: ListModel.crdtToList(list.crdt).items });  
+          
+        res.status(200).send();
+      } catch (err) {
+        res.status(500).send();
+      }
+    });
+
     router.post('/item/remove', async (req, res) => {
         try {
             await listModel.deleteItem(req.body.listId, req.body.itemName);

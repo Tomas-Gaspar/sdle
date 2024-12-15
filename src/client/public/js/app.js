@@ -4,15 +4,26 @@ function encodeForAjax(data) {
     return encodeURIComponent(k) + '=' + encodeURIComponent(data[k])
   }).join('&');
 }
-  
+
 function sendAjaxRequest(method, url, data, handler) {
   let request = new XMLHttpRequest();
 
-  request.open(method, url, true);
-  // request.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').content);
-  request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-  request.addEventListener('load', handler);
-  request.send(encodeForAjax(data));
+  if (method.toUpperCase() === 'GET' && data) {
+    let queryString = '';
+    queryString = '?' + encodeForAjax(data);
+    url += queryString;
+
+    request.open(method, url, true);
+    request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    request.addEventListener('load', handler);
+    request.send();
+  }
+  else {
+    request.open(method, url, true);
+    request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    request.addEventListener('load', handler);
+    request.send(encodeForAjax(data));
+  }  
 }
 
 function isListPage() {
@@ -23,19 +34,52 @@ function logIfOnListPage() {
   setInterval(() => {
     if (isListPage()) {
       let listId = document.getElementById('lists').getAttribute('data-id');
-      sendAjaxRequest('get', '/api/list', {"listId": listId}, updatedListHandler);
+      sendAjaxRequest('get', '/api/list', {'listId': listId}, updatedListHandler);
     }
   }, 1000);
 }
 
 function updatedListHandler() {
-  console.log(this.status);
   if (this.status == 200) {
     const response = JSON.parse(this.response);
-    
-    console.log(response);
-  } else {
-    console.error("Error while updating list");
+    const newItems = response.items;
+    const itemsLists = document.querySelector('#lists ul');
+
+    const oldValues = Array.from(itemsLists.children).map((item) => item.getAttribute('data-id')).slice(1);
+    const newValues = newItems.map((item) => item.name);
+    const deletedValues = oldValues.filter((value) => !newValues.includes(value));
+
+    // Removing deleted items
+    for (let i = 0; i < deletedValues.length; i++) {
+      let deletedItem = document.querySelector(`li[data-id="${deletedValues[i]}"]`);
+      deletedItem.remove();
+    }
+
+    for (let i = 0; i < newItems.length; i++) {
+      let newItem = newItems[i]; 
+      
+      if (oldValues.includes(newItem.name)) { // Updating existing items
+        let item = document.querySelector(`li[data-id="${newItem.name}"]`);
+
+        const quantity = item.querySelector('.quantity p');
+        quantity.textContent = newItem.quantity;
+
+        if (newItem.quantity > 0) {
+          item.style.backgroundColor = '#FFFFFF';
+          item.querySelector('p').style.textDecoration = 'none';
+        }
+        else {
+          item.style.backgroundColor = '#F5F5F5';
+          item.querySelector('p').style.textDecoration = 'line-through';
+        }
+      }
+      else { // Adding new items
+        const itemHTML = createNewItemElement(newItem['name'], newItem['quantity']);
+        itemsLists.appendChild(itemHTML);
+
+        addEventListeners();
+      }    
+    }
   }
 }
 
@@ -111,14 +155,12 @@ function turnInternetOnHandler() {
   internetBtn = document.getElementById('internet-btn');
   internetInput = internetBtn.querySelector('input');
   internetInput.setAttribute('data-id', true);
-  console.log("Internet is turned ON");
 }
 
 function turnInternetOffHandler() {
   internetBtn = document.getElementById('internet-btn');
   internetInput = internetBtn.querySelector('input');
   internetInput.setAttribute('data-id', false);
-  console.log("Internet is turned OFF");
 }
 
 function showCreateList() {
@@ -298,7 +340,7 @@ async function createListHandler() {
   async function addItemHandler() {
     if (this.status == 200) {
       const response = JSON.parse(this.response);
-  
+
       let input = document.querySelector('input[name="addItem"]');
       input.value = '';
       let inputListItem = input.closest('li');
@@ -306,35 +348,40 @@ async function createListHandler() {
 
       let emptyMsg = document.querySelector('#no-item');
       if (emptyMsg) emptyMsg.remove();
-  
-      let newListItem = document.createElement('li');
-      newListItem.className = 'shopping-item list-item';
-      newListItem.setAttribute('data-id', response.name);
 
-      const plusSvg = await getSvg('../img/plus.svg');
-      const minusSvg = await getSvg('../img/minus.svg');
-      const trashSvg = await getSvg('../img/trash.svg');
-  
-      newListItem.innerHTML = `
-        <p>${response.name}</p>
-        <div class="action-btns">
-            <div class="quantity">
-              <button class="icon inc-quant-btn" title="Increase quantity">${plusSvg}</button>
-              <p>${response.quantity}</p>
-              <button class="icon dec-quant-btn" title="Decrease quantity">${minusSvg}</button>
-            </div>
-            <button class="icon del-item-btn" title="Delete item">${trashSvg}</button>
-        </div>
-      `;
-  
+      let newListItem = await createNewItemElement(response.name, response.quantity);
+
       let ulElement = document.querySelector('#lists ul');
       ulElement.appendChild(newListItem);
-  
+
       addEventListeners();
-    }
-    else{
+    } else {
       console.error("Error while adding item to list");
     }
+  }
+
+  async function createNewItemElement(name, quantity) {
+    let newListItem = document.createElement('li');
+    newListItem.className = 'shopping-item list-item';
+    newListItem.setAttribute('data-id', name);
+
+    const plusSvg = await getSvg('../img/plus.svg');
+    const minusSvg = await getSvg('../img/minus.svg');
+    const trashSvg = await getSvg('../img/trash.svg');
+
+    newListItem.innerHTML = `
+      <p>${name}</p>
+      <div class="action-btns">
+          <div class="quantity">
+            <button class="icon inc-quant-btn" title="Increase quantity">${plusSvg}</button>
+            <p>${quantity}</p>
+            <button class="icon dec-quant-btn" title="Decrease quantity">${minusSvg}</button>
+          </div>
+          <button class="icon del-item-btn" title="Delete item">${trashSvg}</button>
+      </div>
+    `;
+
+    return newListItem;
   }
 
   function increaseItemQuantity(event) {
