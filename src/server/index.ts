@@ -96,13 +96,15 @@ function processRequest(req: Buffer[]) {
         case 'get':
             listModel.getList(req[2].toString()).then(list => {
                 socket.send(['reply', client, req[2].toString(), list.title, list.crdt.toString()]);
-            }).catch(err => {
-                socket.send(['error', client, err.message]);
+            }).catch(() => {
+                socket.send(['error', client, 'List not found']);
             });
             break;
         // [ 'request', 'put', 'list_id', 'list_title', 'list' ]
         case 'put':
-            listModel.getList(req[2].toString()).then(list => {
+            listModel.getList(req[2].toString()).catch(() => {
+                return Promise.resolve({title: req[3].toString(), crdt: AWORStructure.fromString(req[4].toString())});
+            }).then(list => {
                 list.crdt.join(AWORStructure.fromString(req[4].toString()));
                 listModel.saveList(req[2].toString(), list.title, list.crdt).then(() => {
                     const hash = createHash('sha256').update(req[2]).digest('hex');
@@ -121,16 +123,13 @@ function processRequest(req: Buffer[]) {
                     xpub.send(message);
                     socket.send(['reply', client, ...messageList]);
                 }).catch(err => {
-                    socket.send(['error', client, err.message]);
+                    socket.send(['error', client, 'Error saving list']);
                 });
-            }).catch(err => {
-                socket.send(['error', client, err.message]);
             });
             break;
         default:
             break;
     }
-    
 }
 
 async function handlePublisher() {
@@ -163,7 +162,9 @@ async function handleSubscriptions() {
         } else {
             // [ 'update', 'list_id', 'list_title', 'list' ]
             if (header.toString() === 'update') {
-                listModel.getList(req[0].toString()).then(list => {
+                listModel.getList(req[0].toString()).catch(() => {
+                    return Promise.resolve({title: req[1].toString(), crdt: AWORStructure.fromString(req[2].toString())});
+                }).then(list => {
                     list.crdt.join(AWORStructure.fromString(req[2].toString()));
                     listModel.saveList(req[0].toString(), req[1].toString(), list.crdt);
                 });
