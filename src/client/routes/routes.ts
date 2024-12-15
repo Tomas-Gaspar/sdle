@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { ListModel } from '../../common/ListModel';
 import { v4 as uuidv4 } from 'uuid';
-import { Dealer } from 'zeromq';
+import { Dealer, Request } from 'zeromq';
 import { AWORStructure } from '../../common/crdt/AWORStructure';
 
 const dealer = new Dealer();
@@ -12,21 +12,29 @@ const currState = {
     page: undefined as string | undefined
 };
 
+function processReply(listModel: ListModel, reply: Buffer[]) {
+    if (reply[0].toString() === 'error') {
+        console.error('Error: ' + reply[1].toString());
+        return;
+    } else if (reply[0].toString() === '') {
+        reply.shift();
+    }
+
+    const id = reply[1].toString();
+    const title = reply[2].toString();
+    const crdt = AWORStructure.fromString(reply[3].toString());
+
+    return listModel.getList(id).then((list) => {
+        list.crdt.join(crdt);
+        listModel.saveList(id, title, list.crdt);
+    }).catch(() => {
+        listModel.saveList(id, title, crdt);
+    });
+}
+
 async function receiveServer(listModel: ListModel) {
     for await (const reply of dealer) {
-        if (reply[0].toString() === 'error') {
-            console.error('Error: ' + reply[1].toString());
-            continue;
-        }
-
-        const id = reply[1].toString();
-        const title = reply[2].toString();
-        const crdt = AWORStructure.fromString(reply[3].toString());
-
-        listModel.getList(id).then((list) => {
-            list.crdt.join(crdt);
-            listModel.saveList(id, title, list.crdt);
-        });
+        processReply(listModel, reply);
     }
 }
 
@@ -68,6 +76,33 @@ const apiRoutes = (listModel: ListModel) => {
         }
     });
 
+    router.post('/download', async (req, res) => {
+      try {
+        if (currState.internet) {
+          console.log("INTERACTOR: Downloading list from the server");
+          const listId = req.body.listId;
+
+          const request = new Request({receiveTimeout: 1000});
+          request.connect('tcp://localhost:5556')
+
+          await request.send(['get', listId])
+          await processReply(listModel, await request.receive());
+
+          request.disconnect('tcp://localhost:5556');
+
+          const list = await listModel.getList(listId);
+          res.json({ internet: true, id: listId, title: list.title });
+
+        }
+        else res.json({internet: false});
+
+        res.status(200).send();
+      } catch (err) {
+        console.log(err)
+        res.status(500).send();
+      }
+    });
+  
     router.post('/create', async (req, res) => {
         try {
             const listId = uuidv4();
