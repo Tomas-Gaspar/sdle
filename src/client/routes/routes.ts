@@ -15,7 +15,7 @@ const currState = {
 function processReply(listModel: ListModel, reply: Buffer[]) {
     if (reply[0].toString() === 'error') {
         console.error('Error: ' + reply[1].toString());
-        return;
+        return reply[1].toString();
     } else if (reply[0].toString() === '') {
         reply.shift();
     }
@@ -106,9 +106,13 @@ const apiRoutes = (listModel: ListModel) => {
           request.connect('tcp://localhost:5556')
 
           await request.send(['get', listId])
-          await processReply(listModel, await request.receive());
-
+          const reply = processReply(listModel, await request.receive());
           request.disconnect('tcp://localhost:5556');
+
+            if (typeof reply === 'string') {
+                res.status(400).send();
+                return;
+            }
 
           const list = await listModel.getList(listId);
           res.json({ internet: true, id: listId, title: list.title });

@@ -147,7 +147,7 @@ function processRequest(req: Buffer[]) {
                     
                     xpub.send(message);
                     socket.send(['reply', client, ...messageList]);
-                }).catch(err => {
+                }).catch(() => {
                     socket.send(['error', client, 'Error saving list']);
                 });
             });
