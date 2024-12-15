@@ -20,9 +20,15 @@ function processReply(listModel: ListModel, reply: Buffer[]) {
         reply.shift();
     }
 
-    const id = reply[1].toString();
-    const title = reply[2].toString();
-    const crdt = AWORStructure.fromString(reply[3].toString());
+    let id, title, crdt;
+    try {
+        id = reply[1].toString();
+        title = reply[2].toString();
+        crdt = AWORStructure.fromString(reply[3].toString());
+    } catch {
+        console.error('Unexpected server response')
+        return 'Unexpected server response';
+    }
 
     return listModel.getList(id).then((list) => {
         list.crdt.join(crdt);
